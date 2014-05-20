@@ -24,6 +24,10 @@ if [ $# -lt 1 ]; then
     exit
 fi
 
+# Integer comparison in if statements
+# eq, ne, gt, ge, lt, le
+# ==, !=, > , >=, < , <=
+
 # http://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
 for myfile in *.ext
 do
