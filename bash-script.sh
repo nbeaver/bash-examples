@@ -18,6 +18,15 @@ set -u
 set -e
 # set -o errexit
 
+# Testing if a file exists.
+test -e myfile.txt
+# Testing a command's return value and exiting if there is an error.
+ERROR_CODE=$?
+if [ $ERROR_CODE -ne 0 ]; then
+    echo "Error: command failed."
+    exit $ERROR_CODE
+fi
+
 # Using the if construct
 if [ $# -lt 1 ]; then
     echo "No arguments."
