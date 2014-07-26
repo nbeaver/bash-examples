@@ -16,7 +16,14 @@ set -u
 
 # Terminate as soon as any command fails
 set -e
-# set -o errexit
+
+# Show error code of first error in a pipe.
+set -o pipefail
+
+# All at the same time.
+set -euo pipefail
+
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/
 
 # Testing if a file exists.
 test -e myfile.txt
