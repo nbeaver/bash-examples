@@ -12,9 +12,9 @@
 
 # Treat unset variables and parameters other than the special parameters "@" and "*" as an error when performing parameter  expansion.
 set -u
-# set -o nonunset # longer version
+# set -o nounset # longer version
 
-# Terminate as soon as any command fails
+# Terminate as soon as any command fails.
 set -e
 
 # Show error code of first error in a pipe.
