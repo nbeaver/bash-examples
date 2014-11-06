@@ -34,10 +34,24 @@ if [ $ERROR_CODE -ne 0 ]; then
     exit $ERROR_CODE
 fi
 
-# Using the if construct
+# Using the if construct with arithmetic conditionals.
 if [ $# -lt 1 ]; then
     echo "No arguments."
     exit
+fi
+
+# Using the if construct with process return values.
+if ping -c 1 google.com > /dev/null; then
+	wget http://www.google.com
+else
+	echo 'Cannot ping google.com.'
+fi
+# Alternative syntax.
+if ping -c 1 google.com > /dev/null
+then
+	wget http://www.google.com
+else
+	echo 'Cannot ping google.com.'
 fi
 
 # Integer comparison in if statements
@@ -50,3 +64,27 @@ do
     myfile_no_extension="${myfile%.*}"
     echo "$myfile"
 done
+
+# iterate over arguments separated by spaces.
+# http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script
+for var in "$@"
+do
+	echo "$var"
+done
+
+# Run through each line of a text file.
+# http://stackoverflow.com/questions/1521462/looping-through-the-content-of-a-file-in-bash
+while read line; do
+	echo "$line"
+done < ~/path/to/file.txt
+
+# bash functions.
+function myfunc {
+	local num_args="$#"
+	echo "number of args: $num_args"
+}
+# invoke the function
+myfunc
+
+# read a text file into a shell variable.
+TARGET=$(cat -- "myfile.txt")
