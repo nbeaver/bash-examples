@@ -40,6 +40,18 @@ if [ $# -lt 1 ]; then
     exit
 fi
 
+# Test if a string is not empty.
+VAR="hello"
+if [ -n "$VAR" ]; then
+    echo "VAR is not empty"
+fi
+# Test if a string is empty.
+VAR=""
+if [ -z "$VAR" ]; then
+    echo "VAR is empty"
+fi
+# http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/
+
 # Using the if construct with process return values.
 if ping -c 1 google.com > /dev/null; then
 	wget http://www.google.com
@@ -88,3 +100,8 @@ myfunc
 
 # read a text file into a shell variable.
 TARGET=$(cat -- "myfile.txt")
+
+# If you cd to a relative path,
+# make sure to do this, or the directory might be wrong.
+unset CDPATH
+# https://bosker.wordpress.com/2012/02/12/bash-scripters-beware-of-the-cdpath/
