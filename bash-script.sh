@@ -105,3 +105,9 @@ TARGET=$(cat -- "myfile.txt")
 # make sure to do this, or the directory might be wrong.
 unset CDPATH
 # https://bosker.wordpress.com/2012/02/12/bash-scripters-beware-of-the-cdpath/
+
+# Splitting piplines with comments on each line.
+cat myfile.txt | # Output the file.
+sort -n |        # Sort it numerically.
+uniq |           # Remove repeats.
+head -n 1        # Get the line beginning with the first (smallest) number.
