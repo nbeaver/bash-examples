@@ -22,17 +22,33 @@ set -o pipefail
 
 # All at the same time.
 set -euo pipefail
-
 # http://redsymbol.net/articles/unofficial-bash-strict-mode/
 
 # Testing if a file exists.
 test -e myfile.txt
+
 # Testing a command's return value and exiting if there is an error.
+mycommand
 ERROR_CODE=$?
 if [ $ERROR_CODE -ne 0 ]; then
     echo "Error: command failed."
     exit $ERROR_CODE
 fi
+
+# Testing piped commands for errors.
+command1 | command2
+TEMP=("${PIPESTATUS[@]}")
+echo "TEMP: ${TEMP[@]}"
+if [ ${TEMP[0]} -ne 0 ]; then
+    echo "1st command error: ${TEMP[0]}"
+elif [ ${TEMP[1]} -ne 0 ]; then
+    echo "2nd command error: ${TEMP[1]}"
+else
+    echo "TEMP: ${TEMP[@]}"
+    echo "Both return codes = 0."
+fi
+# https://stackoverflow.com/questions/6565694/left-side-failure-on-pipe-in-bash/6566171
+# Yes, that really is the best way to copy an array.
 
 # Using the if construct with arithmetic conditionals.
 if [ $# -lt 1 ]; then
@@ -98,6 +114,18 @@ function myfunc {
 # invoke the function
 myfunc
 
+# Read-only (immutable or constant) variables.
+readonly mypath="/tmp/"
+
+# Unfortunately, these are inconvenient for shell functions,
+# because even if they're local,
+# they still can only be assigned once,
+# and so this function can only be run once:
+function myfunc {
+	readonly local mypath="/tmp/"
+	echo "$mypath"
+}
+
 # read a text file into a shell variable.
 TARGET=$(cat -- "myfile.txt")
 
@@ -111,3 +139,9 @@ cat myfile.txt | # Output the file.
 sort -n |        # Sort it numerically.
 uniq |           # Remove repeats.
 head -n 1        # Get the line beginning with the first (smallest) number.
+
+# Find directory script was called from.
+DIR="$(dirname "$0")"
+# more robust:
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+# https://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
