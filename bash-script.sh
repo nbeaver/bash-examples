@@ -1,27 +1,51 @@
 #!/usr/bin/env bash
 
-# $# # number of arguments
-# $* # all arguments
-# $@ # all arguments
+show_arguments() {
+    echo 'Number of arguments $# = `'$#\'
+    echo 'All arguments $*   = `'$*\'
+    for word in $*; do echo "\`$word'"; done
+    for word in $*; do echo "\`"$word"'"; done
+    echo 'All arguments $@   = `'$@\'
+    for word in $@; do echo "\`$word'"; done
+    for word in $@; do echo "\`"$word"'"; done
+    echo 'All arguments "$*" = `'"$*"\'
+    for word in "$*"; do echo "\`$word'"; done
+    for word in "$*"; do echo "\`"$word"'"; done
+    echo 'All arguments "$@" = `'"$@"\'
+    for word in "$@"; do echo "\`$word'"; done
+    for word in "$@"; do echo "\`"$word"'"; done
+    echo 'Script name $0 = `'$0\'
+    echo '1st argument $1   = `'$1\'
+    echo '2nd argument $2   = `'$2\'
+    echo '3rd argument $3   = `'$3\'
+    echo '4th argument $4   = `'$4\'
+    echo '1st argument "$1" = `'"$1"\'
+    echo '2nd argument "$2" = `'"$2"\'
+    echo '3rd argument "$3" = `'"$3"\'
+    echo '4th argument "$4" = `'"$4"\'
+}
+show_arguments '*' '~' '$HOME' ' . .. ... .....    ' 
 # http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs
 # http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters
-# $0 # script name
-# $1 # 1st argument, last name
-# $2 # 2nd argument, first name
-# $9 # ninth argument
 
-# Treat unset variables and parameters other than the special parameters "@" and "*" as an error when performing parameter  expansion.
+echo '-------------------------------------------------------------------------------'
+# Make unset variables (and parameters other than the special parameters "@" and "*")
+# produce an 'unbound variable' error.
 set -u
 set -o nounset # equivalent longer version
 
-# Now undo that.
+# Go back to the default of ignoring unset variables.
 set +u
 set +o nounset
+echo "\$UNBOUND_VARIABLE = $UNBOUND_VARIABLE"
+declare -p UNBOUND_VARIABLE
 
 # Terminate as soon as any command fails.
 set -e
+# Undo that.
+set +e
 
-# Show error code of first error in a pipe.
+# Get error code of first command to fail in a pipeline.
 set -o pipefail
 
 # All at the same time.
@@ -31,23 +55,46 @@ set -euo pipefail
 # Undo all at the same time.
 set +euo pipefail
 
-# Testing if a file exists.
-test -e myfile.txt
+echo '-------------------------------------------------------------------------------'
+echo "Checking a variable's name and value using the \`declare' shell builtin."
+MYVAR=1
+declare -p MYVAR
 
-# Testing a command's return value and exiting if there is an error.
+echo '-------------------------------------------------------------------------------'
+file_exists() {
+    echo "Testing if '"$MYFILE"' exists."
+    if test -e example.txt
+    then
+        echo "$MYFILE exists."
+        return 0
+    else
+        echo "$MYFILE does not exist."
+        return 1
+    fi
+}
+MYFILE='example.txt'
+file_exists $MYFILE
+
+echo '-------------------------------------------------------------------------------'
+echo "Testing a command's return value."
 example_error() {
     return 1;
 }
 check_exit_code() {
-    $* # run the command.
+    printf "Running this:\n\t$*\n"
+    $*
     ERROR_CODE=$?
     if [ $ERROR_CODE -ne 0 ]; then
-        echo "The command '"$*"' failed with return code $ERROR_CODE."
+        echo 'The command `'$*"' failed with return code $ERROR_CODE."
     fi
 }
 check_exit_code example_error
 
-# Testing piped commands for errors.
+echo '-------------------------------------------------------------------------------'
+printf "Testing piped commands for errors.\n"
+no_error(){
+    return 0
+}
 another_error() {
     return 42;
 }
@@ -55,46 +102,57 @@ print_pipe_errors() {
     printf "Running this:\n\t$*\n"
     $*
     TEMP=("${PIPESTATUS[@]}")
+    # Yes, that really is the best way to copy an array.
+    # https://stackoverflow.com/questions/6565694/left-side-failure-on-pipe-in-bash/6566171
     declare -p TEMP
     echo "TEMP: ${TEMP[@]}"
+    echo "PIPESTATUS: ${PIPESTATUS[@]}"
     if [ ${TEMP[0]} -ne 0 ]; then
         echo "1st command error: ${TEMP[0]}"
-        echo "2nd command error: ${TEMP[1]}"
     elif [ ${TEMP[1]} -ne 0 ]; then
         echo "2nd command error: ${TEMP[1]}"
+    elif [ ${TEMP[1]} -ne 0 ]; then
+        echo "3rd command error: ${TEMP[2]}"
     else
         echo "TEMP: ${TEMP[@]}"
+        echo "PIPESTATUS: ${PIPESTATUS[@]}"
         echo "Both return codes = 0."
     fi
 }
-print_pipe_errors 'example_error | another_error'
-print_pipe_errors echo "Hello, world." | tr . !
+print_pipe_errors 'no_error | no_error | example_error'
+print_pipe_errors 'no_error | example_error | another_error'
+print_pipe_errors 'echo "Hello, world." | tr . !'
 
-# https://stackoverflow.com/questions/6565694/left-side-failure-on-pipe-in-bash/6566171
-# Yes, that really is the best way to copy an array.
 
-# Using the if construct with arithmetic conditionals.
-if [ $# -lt 1 ]; then
-    echo "No arguments."
-fi
+echo '-------------------------------------------------------------------------------'
+echo 'Using the if construct with arithmetic conditionals.'
+check_num_arguments() {
+    if [ $# -lt 1 ]; then
+        echo "No arguments."
+    else
+        echo "Number of arguments: $#"
+        echo "Arguments: $*"
+    fi
+}
+check_num_arguments
 
-# Test if a string is not empty.
+echo '-------------------------------------------------------------------------------'
+echo 'Test if a string is not empty.'
 VAR="hello"
+declare -p VAR
 if [ -n "$VAR" ]; then
     echo "VAR is not empty"
 fi
 
-# Test if a string is empty.
-VAR=""
-if [ -z "$VAR" ]; then
+echo '-------------------------------------------------------------------------------'
+echo 'Test if a variable is empty.'
+VAR2=""
+declare -p VAR2
+if [ -z "$EMPTY" ]; then
     echo "VAR is empty"
 fi
 # http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/
 
-VAR=1
-# Seeing a variable's value.
-declare -p VAR
-echo $VAR
 
 ## Using the if construct with process return values.
 #if ping -c 1 google.com > /dev/null; then
