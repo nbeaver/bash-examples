@@ -118,26 +118,24 @@ another_error() {
 }
 print_pipe_errors() {
     printf "Running this:\n\t$*\n"
-    $*
-    TEMP=("${PIPESTATUS[@]}")
-    # Yes, that really is the best way to copy an array.
+    eval "$*"'; RETURN_CODE_ARRAY=(${PIPESTATUS[@]})'
+    # DANGER: this is for demonstration purposes only.
+    # http://mywiki.wooledge.org/BashFAQ/050
+    # Also, yes, that really is the best way to copy a Bash array.
     # https://stackoverflow.com/questions/6565694/left-side-failure-on-pipe-in-bash/6566171
-    if [ ${TEMP[0]} -ne 0 ]; then
-        echo "1st command error: ${TEMP[0]}"
-    elif [ ${TEMP[1]} -ne 0 ]; then
-        echo "2nd command error: ${TEMP[1]}"
-    elif [ ${TEMP[2]} -ne 0 ]; then
-        echo "3rd command error: ${TEMP[2]}"
-    else
-        echo "TEMP: ${TEMP[@]}"
-        echo "PIPESTATUS: ${PIPESTATUS[@]}"
-        echo "Both return codes = 0."
-    fi
+
+    declare -p RETURN_CODE_ARRAY
+    for INDEX in ${!RETURN_CODE_ARRAY[*]}
+    do
+        echo "#$INDEX return code: ${RETURN_CODE_ARRAY[$INDEX]}"
+    done
+    # http://www.linuxjournal.com/content/bash-arrays
 }
+print_pipe_errors 'no_error'
+print_pipe_errors 'example_error | another_error'
 print_pipe_errors 'no_error | no_error | example_error'
 print_pipe_errors 'no_error | example_error | another_error'
 print_pipe_errors 'echo "Hello, world." | tr . !'
-
 
 echo '-------------------------------------------------------------------------------'
 echo 'Using the if construct with arithmetic conditionals.'
