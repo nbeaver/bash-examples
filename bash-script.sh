@@ -170,14 +170,19 @@ if [ -z "$EMPTY" ]; then
 fi
 # http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/
 
-echo '-------------------------------------------------------------------------------'
-## Using the if construct with process return values.
-if ping -c 1 google.com > /dev/null
-then
-	echo 'Succesfully pinged google.com.'
-else
-	echo 'Cannot ping google.com.'
-fi
+# Using the if construct with process return values.
+process_return_value_conditional() {
+    if ping -c 1 google.com > /dev/null
+    then
+            echo '-------------------------------------------------------------------------------'
+            echo 'Succesfully pinged google.com.'
+    else
+            echo '-------------------------------------------------------------------------------'
+            echo 'Cannot ping google.com.'
+    fi
+}
+# Put it in background in case it takes a while to return.
+process_return_value_conditional &
 
 echo '-------------------------------------------------------------------------------'
 # http://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
