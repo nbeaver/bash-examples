@@ -28,6 +28,13 @@ show_arguments '*' '~' '$HOME' ' . .. ... .....    '
 # http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs
 # http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters
 
+echo 'Iterate over arguments separated by spaces.'
+# http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script
+for var in "$@"
+do
+    echo "$var"
+done
+
 echo '-------------------------------------------------------------------------------'
 # Make unset variables (and parameters other than the special parameters "@" and "*")
 # produce an 'unbound variable' error.
@@ -54,6 +61,17 @@ set -euo pipefail
 
 # Undo all at the same time.
 set +euo pipefail
+
+echo '-------------------------------------------------------------------------------'
+echo 'Bash functions.'
+function myfunc {
+    local num_args="$#"
+    echo "number of args: $num_args"
+}
+declare -f myfunc
+echo 'Invoke the function.'
+echo 'myfunc 1 2 3'
+myfunc 1 2 3
 
 echo '-------------------------------------------------------------------------------'
 echo "Checking a variable's name and value using the \`declare' shell builtin."
@@ -104,14 +122,11 @@ print_pipe_errors() {
     TEMP=("${PIPESTATUS[@]}")
     # Yes, that really is the best way to copy an array.
     # https://stackoverflow.com/questions/6565694/left-side-failure-on-pipe-in-bash/6566171
-    declare -p TEMP
-    echo "TEMP: ${TEMP[@]}"
-    echo "PIPESTATUS: ${PIPESTATUS[@]}"
     if [ ${TEMP[0]} -ne 0 ]; then
         echo "1st command error: ${TEMP[0]}"
     elif [ ${TEMP[1]} -ne 0 ]; then
         echo "2nd command error: ${TEMP[1]}"
-    elif [ ${TEMP[1]} -ne 0 ]; then
+    elif [ ${TEMP[2]} -ne 0 ]; then
         echo "3rd command error: ${TEMP[2]}"
     else
         echo "TEMP: ${TEMP[@]}"
@@ -136,6 +151,10 @@ check_num_arguments() {
 }
 check_num_arguments
 
+# Integer comparison in if statements compared to C.
+# Bash if: eq, ne, gt, ge, lt, le
+#    C if: ==, !=, > , >=, < , <=
+
 echo '-------------------------------------------------------------------------------'
 echo 'Test if a string is not empty.'
 VAR="hello"
@@ -153,25 +172,16 @@ if [ -z "$EMPTY" ]; then
 fi
 # http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/
 
-
+echo '-------------------------------------------------------------------------------'
 ## Using the if construct with process return values.
-#if ping -c 1 google.com > /dev/null; then
-#	echo 'Succesfully pinged google.com.'
-#else
-#	echo 'Cannot ping google.com.'
-#fi
-## Alternative syntax that is more symmetric.
-#if ping -c 1 google.com > /dev/null
-#then
-#	echo 'Succesfully pinged google.com.'
-#else
-#	echo 'Cannot ping google.com.'
-#fi
+if ping -c 1 google.com > /dev/null
+then
+	echo 'Succesfully pinged google.com.'
+else
+	echo 'Cannot ping google.com.'
+fi
 
-# Integer comparison in if statements
-# eq, ne, gt, ge, lt, le
-# ==, !=, > , >=, < , <=
-
+echo '-------------------------------------------------------------------------------'
 # http://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
 for myfile in *.txt
 do
@@ -180,60 +190,56 @@ do
     echo "Filename without extension: $myfile_no_extension"
 done
 
-# iterate over arguments separated by spaces.
-# http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script
-for var in "$@"
-do
-    echo "$var"
-done
 
-# Run through each line of a text file.
-# http://stackoverflow.com/questions/1521462/looping-through-the-content-of-a-file-in-bash
+echo '-------------------------------------------------------------------------------'
+echo 'Run through each line of a text file.'
 while read MYVAR
 do
     echo "$MYVAR" #MYVAR holds the line.
 done < ./example.txt
+# http://stackoverflow.com/questions/1521462/looping-through-the-content-of-a-file-in-bash
 
-# bash functions.
-function myfunc {
-local num_args="$#"
-echo "number of args: $num_args"
-declare -p num_args
+echo '-------------------------------------------------------------------------------'
+echo 'Read-only (immutable or constant) variables.'
+
+function onetime_function {
+    readonly local readonly_local_path="/tmp/"
+    echo "$readonly_local_path"
 }
-# invoke the function
-myfunc 1 2 3
+declare -f onetime_function
 
-# Read-only (immutable or constant) variables.
-readonly readonly_path="/tmp/"
-declare -p readonly_path
+echo "Unfortunately, these are inconvenient for shell functions,"
+echo "because readonly variables can only be assigned once,"
+echo "so this function can only be run once."
+onetime_function
+onetime_function
 
-# Unfortunately, these are inconvenient for shell functions,
-# because even if they're local,
-# they still can only be assigned once,
-# and so this function can only be run once:
-function myfunc {
-readonly local readonly_local_path="/tmp/"
-echo "$readonly_local_path"
-declare -p readonly_path
-}
+echo '-------------------------------------------------------------------------------'
+echo 'Read a text file into a shell variable.'
+TEXTFILE_CONTENTS=$(cat -- "./example.txt")
+declare -p TEXTFILE_CONTENTS
 
-# read a text file into a shell variable.
-TARGET=$(cat -- "./example.txt")
-
-# If you cd to a relative path,
-# make sure to do this, or the directory might be wrong.
-echo $CDPATH
+echo '-------------------------------------------------------------------------------'
+echo 'Before using cd(1) on a relative path,'
+echo 'make sure to unset $CDPATH in case another script set it.'
+CDPATH="/tmp/"
+declare -p CDPATH
+cd example/
 unset CDPATH
-echo $CDPATH
+cd example/
+pwd
+cd -
 # https://bosker.wordpress.com/2012/02/12/bash-scripters-beware-of-the-cdpath/
 
-# Splitting piplines with comments on each line.
+echo '-------------------------------------------------------------------------------'
+echo 'Splitting piplines with comments on each line.'
 cat ./example.txt | # Output the file.
 sort -n |           # Sort it numerically.
 uniq |              # Remove repeats.
 head -n 1           # Get the line beginning with the first (smallest) number.
 
-# Find directory script was called from, even if it's called from a symlink.
+echo '-------------------------------------------------------------------------------'
+echo "Find directory script was called from, even if it's called from a symlink."
 DIR="$(dirname "$0")"
 declare -p DIR
 # more robust for e.g. calling from a symlink:
@@ -241,7 +247,8 @@ FULL_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 declare -p FULL_PATH
 # https://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
-# Brace expansion
+echo '-------------------------------------------------------------------------------'
+echo "Brace expansion examples."
 echo -n '{aa,bb,cc,dd} = '
 echo {aa,bb,cc,dd} # aa bb cc dd
 echo -n '{0..12} ='
