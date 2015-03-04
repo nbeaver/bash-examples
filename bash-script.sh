@@ -1,66 +1,44 @@
 #!/usr/bin/env bash
+echo 'Shell arguments and quoting.'
 
 show_arguments() {
-    echo 'Number of arguments $# = `'$#\'
-    echo 'All arguments $*   = `'$*\'
-    for word in $*; do echo "\`$word'"; done
-    for word in $*; do echo "\`"$word"'"; done
-    echo 'All arguments $@   = `'$@\'
-    for word in $@; do echo "\`$word'"; done
-    for word in $@; do echo "\`"$word"'"; done
-    echo 'All arguments "$*" = `'"$*"\'
-    for word in "$*"; do echo "\`$word'"; done
-    for word in "$*"; do echo "\`"$word"'"; done
-    echo 'All arguments "$@" = `'"$@"\'
-    for word in "$@"; do echo "\`$word'"; done
-    for word in "$@"; do echo "\`"$word"'"; done
-    echo 'Script name $0 = `'$0\'
-    echo '1st argument $1   = `'$1\'
-    echo '2nd argument $2   = `'$2\'
-    echo '3rd argument $3   = `'$3\'
-    echo '4th argument $4   = `'$4\'
-    echo '1st argument "$1" = `'"$1"\'
-    echo '2nd argument "$2" = `'"$2"\'
-    echo '3rd argument "$3" = `'"$3"\'
-    echo '4th argument "$4" = `'"$4"\'
+    echo 'Number of arguments $# = `'$#\`
+    echo 'All arguments $*   = `'$*\`
+    echo 'All arguments $@   = `'$@\`
+    echo 'All arguments "$*" = `'"$*"\`
+    echo 'All arguments "$@" = `'"$@"\`
+    echo 'Script name $0 = `'$0\`
+    echo '1st argument $1   = `'$1\`
+    echo '2nd argument $2   = `'$2\`
+    echo '3rd argument $3   = `'$3\`
+    echo '4th argument $4   = `'$4\`
+    echo '1st argument "$1" = `'"$1"\`
+    echo '2nd argument "$2" = `'"$2"\`
+    echo '3rd argument "$3" = `'"$3"\`
+    echo '4th argument "$4" = `'"$4"\`
+    echo '	for word in $*; do echo "\`$word\`"; done'
+          for word in $*; do echo "\`$word\`"; done
+    echo '	for word in $*; do echo "\`"$word"\`"; done'
+            for word in $*; do echo "\`"$word"\`"; done
+    echo '	for word in "$*"; do echo "\`$word\`"; done'
+            for word in "$*"; do echo "\`$word\`"; done
+    echo '	for word in "$*"; do echo "\`"$word"\`"; done'
+            for word in "$*"; do echo "\`"$word"\`"; done
+    echo '	for word in $@; do echo "\`$word\`"; done'
+            for word in $@; do echo "\`$word\`"; done
+    echo '	for word in $@; do echo "\`"$word"\`"; done'
+            for word in $@; do echo "\`"$word"\`"; done
+    echo '	for word in "$@"; do echo "\`$word\`"; done'
+            for word in "$@"; do echo "\`$word\`"; done
+    echo '	for word in "$@"; do echo "\`"$word"\`"; done'
+            for word in "$@"; do echo "\`"$word"\`"; done
 }
-show_arguments '*' '~' '$HOME' ' . .. ... .....    ' 
+echo '	'show_arguments \'*\' \'\~\' \"\'\$HOME\'\" \''   . .. ... .....    '\'
+show_arguments '*' '~' '$HOME' '   . .. ... .....    ' 
 # http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs
 # http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters
-
-echo 'Iterate over arguments separated by spaces.'
 # http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script
-for var in "$@"
-do
-    echo "$var"
-done
-
-echo '-------------------------------------------------------------------------------'
-# Make unset variables (and parameters other than the special parameters "@" and "*")
-# produce an 'unbound variable' error.
-set -u
-set -o nounset # equivalent longer version
-
-# Go back to the default of ignoring unset variables.
-set +u
-set +o nounset
-echo "\$UNBOUND_VARIABLE = $UNBOUND_VARIABLE"
-declare -p UNBOUND_VARIABLE
-
-# Terminate as soon as any command fails.
-set -e
-# Undo that.
-set +e
-
-# Get error code of first command to fail in a pipeline.
-set -o pipefail
-
-# All at the same time.
-set -euo pipefail
-# http://redsymbol.net/articles/unofficial-bash-strict-mode/
-
-# Undo all at the same time.
-set +euo pipefail
+# http://qntm.org/bash
 
 echo '-------------------------------------------------------------------------------'
 echo 'Bash functions.'
@@ -69,8 +47,8 @@ function myfunc {
     echo "number of args: $num_args"
 }
 declare -f myfunc
-echo 'Invoke the function.'
-echo 'myfunc 1 2 3'
+echo 'Invoke the function:'
+echo '	myfunc 1 2 3'
 myfunc 1 2 3
 
 echo '-------------------------------------------------------------------------------'
@@ -96,6 +74,7 @@ file_exists $MYFILE
 echo '-------------------------------------------------------------------------------'
 echo "Testing a command's return value."
 example_error() {
+    echo "returning 1"
     return 1;
 }
 check_exit_code() {
@@ -111,9 +90,11 @@ check_exit_code example_error
 echo '-------------------------------------------------------------------------------'
 printf "Testing piped commands for errors.\n"
 no_error(){
+    echo "returning 0"
     return 0
 }
 another_error() {
+    echo "returning 42"
     return 42;
 }
 print_pipe_errors() {
@@ -136,6 +117,42 @@ print_pipe_errors 'example_error | another_error'
 print_pipe_errors 'no_error | no_error | example_error'
 print_pipe_errors 'no_error | example_error | another_error'
 print_pipe_errors 'echo "Hello, world." | tr . !'
+
+echo '-------------------------------------------------------------------------------'
+# Make unset variables (and parameters other than the special parameters "@" and "*")
+# produce an 'unbound variable' error.
+set -u
+set -o nounset # equivalent longer version
+
+# Go back to the default of ignoring unset variables.
+set +u
+set +o nounset
+echo "\$UNBOUND_VARIABLE = $UNBOUND_VARIABLE"
+declare -p UNBOUND_VARIABLE
+
+# Terminate immediately as soon as anything returns a non-zero status.
+set -e
+# Undo that.
+set +e
+
+# Get error code of first command to fail in a pipeline,
+# instead of the last one.
+echo '	example_error | no_error'
+example_error | no_error
+echo '$? = '$?
+set -o pipefail
+echo '	example_error | no_error'
+example_error | no_error
+echo '$? = '$?
+# Undo.
+set +o pipefail
+
+# All at the same time.
+set -euo pipefail
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+
+# Undo all at the same time.
+set +euo pipefail
 
 echo '-------------------------------------------------------------------------------'
 echo 'Using the if construct with arithmetic conditionals.'
@@ -170,7 +187,10 @@ if [ -z "$EMPTY" ]; then
 fi
 # http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/
 
-# Using the if construct with process return values.
+echo '-------------------------------------------------------------------------------'
+echo 'Example of using the `if` construct with an explicit process return value.'
+echo 'This is not unusual; in face, `if` construct always tests the return value of a process,'
+echo 'since [ ] is shorthand for the `test` command.'
 process_return_value_conditional() {
     if ping -c 1 google.com > /dev/null
     then
@@ -186,20 +206,27 @@ process_return_value_conditional &
 
 echo '-------------------------------------------------------------------------------'
 # http://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
-for myfile in *.txt
-do
-    echo "Filename with extension: $myfile"
-    myfile_no_extension="${myfile%.*}"
-    echo "Filename without extension: $myfile_no_extension"
-done
-
+strip_extensions() {
+    for myfile in *.txt
+    do
+        echo "Filename with extension: $myfile"
+        myfile_no_extension="${myfile%.*}"
+        echo "Filename without extension: $myfile_no_extension"
+    done
+}
+declare -f strip_extensions
+strip_extensions
 
 echo '-------------------------------------------------------------------------------'
-echo 'Run through each line of a text file.'
-while read MYVAR
-do
-    echo "$MYVAR" #MYVAR holds the line.
-done < ./example.txt
+echo '# Run through each line of a text file.'
+readlines() {
+    while read MYVAR
+    do
+        echo "$MYVAR" #MYVAR holds the line.
+    done < ./example.txt
+}
+declare -f readlines
+readlines
 # http://stackoverflow.com/questions/1521462/looping-through-the-content-of-a-file-in-bash
 
 echo '-------------------------------------------------------------------------------'
