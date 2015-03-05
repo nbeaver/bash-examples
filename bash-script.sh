@@ -203,22 +203,110 @@ inspect_run_function print_pipe_errors 'no_error | no_error | example_error'
 
 inspect_run_function print_pipe_errors 'no_error | example_error | another_error'
 
-echo '-------------------------------------------------------------------------------'
+inspect_run_function print_pipe_errors 'echo "# Hello, world." | tr . !'
+
+# -----------------------------------------------------------------------------
+new_section
+
+comment "Shell options."
+
+declare -A long_option
+long_option[a]=allexport
+long_option[B]=braceexpand
+#${long_option["$*"]}
+#declare -p long_option
+comment "http://www.linuxjournal.com/content/bash-associative-arrays"
+
+check_short_option() {
+    # e.g. $- = himBH
+    if [[ $- =~ $* ]]
+    then
+        echo "Short option \`$*' is enabled: \$- = $-"
+        return 0
+    else
+        echo "Short option \`$*' is disabled: \$- = $-"
+        return 1
+    fi
+}
+
+in_array() {
+    local item="$1"
+    local array="$2[@]"
+    for i in "${!array}"
+    do
+        if [ "$item" == "$i" ]
+        then
+            return 0
+        fi
+    done
+    echo "$item not in ${array[@]}"
+    return 1
+}
+# https://raymii.org/s/snippets/Bash_Bits_Check_If_Item_Is_In_Array.html
+# http://stackoverflow.com/questions/14366390/bash-if-condition-check-if-element-is-present-in-array
+# http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value
+
+check_long_option() {
+    local TMP="$IFS"
+    local IFS=':'
+    local LONG_OPTS
+    read -ra LONG_OPTS <<< "$SHELLOPTS"
+    # http://stackoverflow.com/questions/918886/how-do-i-split-a-string-on-a-delimiter-in-bash
+    local IFS="$TMP"
+    if in_array "$*" LONG_OPTS
+    then
+        echo "Long option \`$*' is enabled: \$SHELLOPTS=$SHELLOPTS"
+        return 0
+    else
+        echo "Long option \`$*' is disabled: \$SHELLOPTS=$SHELLOPTS"
+        return 1
+    fi
+}
+
+check_option() {
+    local args="$*"
+    local num_characters=${#args}
+    if [ $num_characters -gt 1 ]
+    then
+        check_long_option "$*"
+        return $?
+    elif [ $num_characters -eq 1 ]
+    then
+        check_short_option "$*"
+        return $?
+    else
+        echo 'Usage: check_option <option-name>'
+        return 2
+    fi
+}
+
+
 # Make unset variables (and parameters other than the special parameters "@" and "*")
 # produce an 'unbound variable' error.
-set -u
-set -o nounset # equivalent longer version
 
+set -u
+check_option nounset
+check_option u
+set -o nounset # equivalent longer version
 # Go back to the default of ignoring unset variables.
 set +u
 set +o nounset
+
 echo "\$UNBOUND_VARIABLE = $UNBOUND_VARIABLE"
 declare -p UNBOUND_VARIABLE
 
 # Terminate immediately as soon as anything returns a non-zero status.
-set -e
+# set -e
+set -o errexit
+if [[ $- =~ e ]]
+then
+    echo 'errexit option is set.'
+else
+    echo 'errexit option is not set.'
+fi
 # Undo that.
 set +e
+set +o errexit
 
 # Get error code of first command to fail in a pipeline,
 # instead of the last one.
