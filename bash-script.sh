@@ -1,57 +1,76 @@
 #!/usr/bin/env bash
-echo 'Shell arguments and quoting.'
+# TODO: add a "comment" function to printf # ...
+# TODO: add an "indent" function for output
+# TODO: change output to .sh
 
-show_arguments() {
-    echo 'Number of arguments $# = `'$#\`
-    echo 'All arguments $*   = `'$*\`
-    echo 'All arguments $@   = `'$@\`
-    echo 'All arguments "$*" = `'"$*"\`
-    echo 'All arguments "$@" = `'"$@"\`
-    echo 'Script name $0 = `'$0\`
-    echo '1st argument $1   = `'$1\`
-    echo '2nd argument $2   = `'$2\`
-    echo '3rd argument $3   = `'$3\`
-    echo '4th argument $4   = `'$4\`
-    echo '1st argument "$1" = `'"$1"\`
-    echo '2nd argument "$2" = `'"$2"\`
-    echo '3rd argument "$3" = `'"$3"\`
-    echo '4th argument "$4" = `'"$4"\`
-    echo '	for word in $*; do echo "\`$word\`"; done'
-          for word in $*; do echo "\`$word\`"; done
-    echo '	for word in $*; do echo "\`"$word"\`"; done'
-            for word in $*; do echo "\`"$word"\`"; done
-    echo '	for word in "$*"; do echo "\`$word\`"; done'
-            for word in "$*"; do echo "\`$word\`"; done
-    echo '	for word in "$*"; do echo "\`"$word"\`"; done'
-            for word in "$*"; do echo "\`"$word"\`"; done
-    echo '	for word in $@; do echo "\`$word\`"; done'
-            for word in $@; do echo "\`$word\`"; done
-    echo '	for word in $@; do echo "\`"$word"\`"; done'
-            for word in $@; do echo "\`"$word"\`"; done
-    echo '	for word in "$@"; do echo "\`$word\`"; done'
-            for word in "$@"; do echo "\`$word\`"; done
-    echo '	for word in "$@"; do echo "\`"$word"\`"; done'
-            for word in "$@"; do echo "\`"$word"\`"; done
+comment() {
+    printf -- "    # "
+    printf -- "$*\n"
 }
-echo '	'show_arguments \'*\' \'\~\' \"\'\$HOME\'\" \''   . .. ... .....    '\'
+
+comment 'Shell arguments and quoting.'
+
+split1() { for word in  $*;  do echo "\`$word\`";   done }
+split2() { for word in  $*;  do echo "\`"$word"\`"; done }
+split3() { for word in "$*"; do echo "\`$word\`";   done }
+split4() { for word in "$*"; do echo "\`"$word"\`"; done }
+split5() { for word in  $@;  do echo "\`$word\`";   done }
+split6() { for word in  $@;  do echo "\`"$word"\`"; done }
+split7() { for word in "$@"; do echo "\`$word\`";   done }
+split8() { for word in "$@"; do echo "\`"$word"\`"; done }
+show_arguments() {
+    comment 'Number of arguments $# = `'$#\`
+    comment 'All arguments $*   = `'$*\`
+    comment 'All arguments $@   = `'$@\`
+    comment 'All arguments "$*" = `'"$*"\`
+    comment 'All arguments "$@" = `'"$@"\`
+    comment 'Script name $0 = `'$0\`
+    comment '1st argument $1   = `'$1\`
+    comment '2nd argument $2   = `'$2\`
+    comment '3rd argument $3   = `'$3\`
+    comment '4th argument $4   = `'$4\`
+    comment '1st argument "$1" = `'"$1"\`
+    comment '2nd argument "$2" = `'"$2"\`
+    comment '3rd argument "$3" = `'"$3"\`
+    comment '4th argument "$4" = `'"$4"\`
+    declare -f split1
+    split1 "$@"
+    declare -f split2
+    split2 "$@"
+    declare -f split3
+    split3 "$@"
+    declare -f split4
+    split4 "$@"
+    declare -f split5
+    split5 "$@"
+    declare -f split6
+    split6 "$@"
+    declare -f split7
+    split7 "$@"
+    declare -f split8
+    comment "This is probably the one you want."
+    split8 "$@"
+}
+comment "Running this:"
+comment '$ show_arguments \'*\' \'\~\' \"\'\$HOME\'\" \''   . .. ... .....    '\'
 show_arguments '*' '~' '$HOME' '   . .. ... .....    ' 
 # http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs
 # http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters
 # http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script
 # http://qntm.org/bash
 
-echo '-------------------------------------------------------------------------------'
-echo 'Bash functions.'
+comment '-------------------------------------------------------------------------------'
+comment 'Bash functions.'
 function myfunc {
     local num_args="$#"
     echo "number of args: $num_args"
 }
 declare -f myfunc
-echo 'Invoke the function:'
-echo '	myfunc 1 2 3'
+comment 'Invoke the function:'
+comment '$ myfunc 1 2 3'
 myfunc 1 2 3
 
-echo '-------------------------------------------------------------------------------'
+comment '-------------------------------------------------------------------------------'
 echo "Checking a variable's name and value using the \`declare' shell builtin."
 MYVAR=1
 declare -p MYVAR
