@@ -40,12 +40,117 @@ myfunc() {
 declare -f myfunc
 inspect_run_function myfunc 1 2 3
 
-# -----------------------------------------------------------------------------
-new_section
 comment "Checking a variable's name and value using the \`declare' shell builtin."
 comment "MYVAR=1"
 MYVAR=1
 declare -p MYVAR
+
+# -----------------------------------------------------------------------------
+new_section
+comment "Using 'if' to check if a file exists."
+
+file_exists() {
+    local filename="$*"
+    echo "# Testing if file \`$filename' exists..."
+    if test -e "$filename"
+    then
+        echo "# \`$filename' exists."
+        return 0
+    else
+        echo "# \`$filename' does not exist."
+        return 1
+    fi
+}
+declare -f file_exists
+inspect_run_function file_exists 'filename with spaces.txt'
+
+# -----------------------------------------------------------------------------
+new_section
+echo 'Test if a string is not empty.'
+VAR="hello"
+declare -p VAR
+if [ -n "$VAR" ]; then
+    echo "VAR is not empty"
+fi
+
+# -----------------------------------------------------------------------------
+new_section
+echo 'Test if a variable is empty.'
+VAR2=""
+declare -p VAR2
+if [ -z "$EMPTY" ]; then
+    echo "VAR is empty"
+fi
+# http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/
+
+
+# -----------------------------------------------------------------------------
+new_section
+echo 'Using the if construct with arithmetic conditionals.'
+check_num_arguments() {
+    if [ $# -lt 1 ]; then
+        echo "No arguments."
+    else
+        echo "Number of arguments: $#"
+        echo "Arguments: $*"
+    fi
+}
+check_num_arguments
+
+# Integer comparison in if statements compared to C.
+# Bash if: eq, ne, gt, ge, lt, le
+#    C if: ==, !=, > , >=, < , <=
+
+echo '-------------------------------------------------------------------------------'
+echo 'Example of using the `if` construct with an explicit process return value.'
+echo 'This is not unusual; in fact, `if` construct always tests the return value of a process,'
+echo 'since [ ] is shorthand for the `test` command.'
+process_return_value_conditional() {
+    if ping -c 1 google.com > /dev/null
+    then
+            echo '# -------------------------------------------------------------------------------'
+            echo '# Succesfully pinged google.com.'
+    else
+            echo '# -------------------------------------------------------------------------------'
+            echo '# Cannot ping google.com.'
+    fi
+}
+# Put it in background in case it takes a while to return.
+process_return_value_conditional &
+
+# -----------------------------------------------------------------------------
+new_section
+# Strip the file extension for e.g. generating the name of an output file.
+strip_extensions() {
+    for myfile in *.txt
+    do
+        echo "Filename with extension: $myfile"
+        myfile_no_extension="${myfile%.*}"
+        echo "Filename without extension: $myfile_no_extension"
+    done
+}
+declare -f strip_extensions
+strip_extensions
+
+# http://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
+# -----------------------------------------------------------------------------
+new_section
+echo '# Run through each line of a text file.'
+readlines() {
+    while read MYVAR
+    do
+        echo "$MYVAR" #MYVAR holds the line.
+    done < ./example.txt
+}
+declare -f readlines
+readlines
+# http://stackoverflow.com/questions/1521462/looping-through-the-content-of-a-file-in-bash
+
+# -----------------------------------------------------------------------------
+new_section
+echo 'Read a text file into a shell variable.'
+TEXTFILE_CONTENTS=$(cat -- "./example.txt")
+declare -p TEXTFILE_CONTENTS
 
 # -----------------------------------------------------------------------------
 new_section
@@ -93,25 +198,6 @@ comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line
 comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
 comment "http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script"
 comment "http://qntm.org/bash"
-
-# -----------------------------------------------------------------------------
-new_section
-comment "Using 'if' to check if a file exists."
-
-file_exists() {
-    local filename="$*"
-    echo "# Testing if file \`$filename' exists..."
-    if test -e "$filename"
-    then
-        echo "# \`$filename' exists."
-        return 0
-    else
-        echo "# \`$filename' does not exist."
-        return 1
-    fi
-}
-declare -f file_exists
-inspect_run_function file_exists 'filename with spaces.txt'
 
 # -----------------------------------------------------------------------------
 new_section
@@ -328,81 +414,6 @@ set -euo pipefail
 set +euo pipefail
 
 echo '-------------------------------------------------------------------------------'
-echo 'Using the if construct with arithmetic conditionals.'
-check_num_arguments() {
-    if [ $# -lt 1 ]; then
-        echo "No arguments."
-    else
-        echo "Number of arguments: $#"
-        echo "Arguments: $*"
-    fi
-}
-check_num_arguments
-
-# Integer comparison in if statements compared to C.
-# Bash if: eq, ne, gt, ge, lt, le
-#    C if: ==, !=, > , >=, < , <=
-
-echo '-------------------------------------------------------------------------------'
-echo 'Test if a string is not empty.'
-VAR="hello"
-declare -p VAR
-if [ -n "$VAR" ]; then
-    echo "VAR is not empty"
-fi
-
-echo '-------------------------------------------------------------------------------'
-echo 'Test if a variable is empty.'
-VAR2=""
-declare -p VAR2
-if [ -z "$EMPTY" ]; then
-    echo "VAR is empty"
-fi
-# http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/
-
-echo '-------------------------------------------------------------------------------'
-echo 'Example of using the `if` construct with an explicit process return value.'
-echo 'This is not unusual; in fact, `if` construct always tests the return value of a process,'
-echo 'since [ ] is shorthand for the `test` command.'
-process_return_value_conditional() {
-    if ping -c 1 google.com > /dev/null
-    then
-            echo '# -------------------------------------------------------------------------------'
-            echo '# Succesfully pinged google.com.'
-    else
-            echo '# -------------------------------------------------------------------------------'
-            echo '# Cannot ping google.com.'
-    fi
-}
-# Put it in background in case it takes a while to return.
-process_return_value_conditional &
-
-echo '-------------------------------------------------------------------------------'
-# http://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
-strip_extensions() {
-    for myfile in *.txt
-    do
-        echo "Filename with extension: $myfile"
-        myfile_no_extension="${myfile%.*}"
-        echo "Filename without extension: $myfile_no_extension"
-    done
-}
-declare -f strip_extensions
-strip_extensions
-
-echo '-------------------------------------------------------------------------------'
-echo '# Run through each line of a text file.'
-readlines() {
-    while read MYVAR
-    do
-        echo "$MYVAR" #MYVAR holds the line.
-    done < ./example.txt
-}
-declare -f readlines
-readlines
-# http://stackoverflow.com/questions/1521462/looping-through-the-content-of-a-file-in-bash
-
-echo '-------------------------------------------------------------------------------'
 echo 'Read-only (immutable or constant) variables.'
 
 function onetime_function {
@@ -416,11 +427,6 @@ echo "because readonly variables can only be assigned once,"
 echo "so this function can only be run once."
 onetime_function
 onetime_function
-
-echo '-------------------------------------------------------------------------------'
-echo 'Read a text file into a shell variable.'
-TEXTFILE_CONTENTS=$(cat -- "./example.txt")
-declare -p TEXTFILE_CONTENTS
 
 echo '-------------------------------------------------------------------------------'
 echo 'Before using cd(1) on a relative path,'
