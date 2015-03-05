@@ -21,8 +21,6 @@ new_section() {
     printf -- '\n'
 }
 inspect_run_function() {
-    comment "Function definition:"
-    declare -f "$1"
     comment "Function with arguments:"
     echo "# $*"
     comment "Output of running function:"
@@ -34,11 +32,12 @@ printf -- '# Bash examples, with output of commands.                            
 printf -- '#==============================================================================\n'
 printf -- '\n'
 
+comment 'Example of a bash function.'
 myfunc() {
     local num_args="$#"
     echo "# number of args: $num_args"
 }
-comment 'Example of a bash function.'
+declare -f myfunc
 inspect_run_function myfunc 1 2 3
 
 # -----------------------------------------------------------------------------
@@ -46,7 +45,6 @@ new_section
 comment "Checking a variable's name and value using the \`declare' shell builtin."
 comment "MYVAR=1"
 MYVAR=1
-printf '# '
 declare -p MYVAR
 
 # -----------------------------------------------------------------------------
@@ -78,11 +76,9 @@ show_arguments() {
     for i in {1..8}
     do
         declare -f split$i
-        echo "# Output of split$i:"
-        split$i "$@"
         inspect_run_function split$i "$@"
     done
-    echo "# (Number 8 is probably the one you want.)"
+    echo "# split8 is probably the one you want."
 }
 comment "This is how it looks before the shell does word splitting and such:"
 echo "show_arguments '-e' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
@@ -90,12 +86,13 @@ echo "show_arguments '-e' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ..
 # printf -- "show_arguments '-e' '*' '~' '\$HOME' '\\\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' \n"
 # echo show_arguments\ \'-e\'\ \'\*\'\ \'\~\'\ \'\$HOME\'\ \'\\\'\ \'\`pwd\`\'\ \'\$\(pwd\)\'\ \ \'\ \ \ \.\ \.\.\ \.\.\.\ \.\.\.\.\.\ \ \ \ \'\ 
 
+declare -f show_arguments
 inspect_run_function show_arguments '-e' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
 
-# http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs
-# http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters
-# http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script
-# http://qntm.org/bash
+comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
+comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
+comment "http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script"
+comment "http://qntm.org/bash"
 
 # -----------------------------------------------------------------------------
 new_section
@@ -113,6 +110,7 @@ file_exists() {
         return 1
     fi
 }
+declare -f file_exists
 inspect_run_function file_exists 'filename with spaces.txt'
 
 # -----------------------------------------------------------------------------
@@ -120,10 +118,13 @@ new_section
 comment "Debug a function using the FUNCNAME array."
 
 this_function() {
-    echo "# On line $LINENO."
-    for func in ${FUNCNAME[*]}
+    echo "# From function \`${FUNCNAME[0]}' on line $LINENO:"
+    # If we used "${FUNCNAME[@]}"
+    # we would get all the elements,
+    # but we only want the second one onward.
+    for func in "${FUNCNAME[@]:1}"
     do
-        echo "# called by $func"
+        echo "# called by \`$func'"
     done
 }
 declare -f this_function
@@ -139,7 +140,8 @@ caller_3() {
 }
 caller_3
 
-# http://stackoverflow.com/questions/9146623/in-bash-is-it-possible-to-get-the-function-name-in-function-body
+comment "http://stackoverflow.com/questions/9146623/in-bash-is-it-possible-to-get-the-function-name-in-function-body"
+comment "http://www.tldp.org/LDP/abs/html/arrays.html"
 
 # -----------------------------------------------------------------------------
 new_section
@@ -151,7 +153,7 @@ example_error() {
 declare -f example_error
 
 check_exit_code() {
-    printf "# ${FUNCNAME[0]}: Running this:\n#\t$*\n"
+    printf "# ${FUNCNAME[0]}: Running this:\n$*\n"
     "$@"
     ERROR_CODE=$?
     if [ $ERROR_CODE -ne 0 ]; then
@@ -173,7 +175,7 @@ another_error() {
     return 42;
 }
 print_pipe_errors() {
-    printf "# ${FUNCNAME[0]}: Running this:\n\t$*\n"
+    printf "# ${FUNCNAME[0]}: Running this:\n$*\n"
     eval "$*"'; RETURN_CODE_ARRAY=(${PIPESTATUS[@]})'
     # DANGER: this is for demonstration purposes only.
     # http://mywiki.wooledge.org/BashFAQ/050
@@ -185,13 +187,21 @@ print_pipe_errors() {
     do
         echo "# $INDEX return code: ${RETURN_CODE_ARRAY[$INDEX]}"
     done
+    echo '# Extracted all return values.'
+    echo ''
     # http://www.linuxjournal.com/content/bash-arrays
 }
+declare -f print_pipe_errors
+declare -f no_error
+declare -f another_error
+
 inspect_run_function print_pipe_errors 'no_error'
+
 inspect_run_function print_pipe_errors 'example_error | another_error'
+
 inspect_run_function print_pipe_errors 'no_error | no_error | example_error'
+
 inspect_run_function print_pipe_errors 'no_error | example_error | another_error'
-inspect_run_function print_pipe_errors 'echo "Hello, world." | tr . !'
 
 echo '-------------------------------------------------------------------------------'
 # Make unset variables (and parameters other than the special parameters "@" and "*")
