@@ -1,4 +1,4 @@
 SHELL := /bin/bash
 all:
-	./bash-script.sh &> out.txt
-	./bash-script.sh |& less
+	./bash-script.sh &> out.sh
+	less out.sh
