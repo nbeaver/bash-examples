@@ -1,12 +1,48 @@
 #!/usr/bin/env bash
-# TODO: add a "comment" function to printf # ...
-# TODO: add an "indent" function for output
-# TODO: change output to .sh
 
 comment() {
     printf -- "    # "
     printf -- "$*\n"
 }
+new_section() {
+    printf -- '\n'
+    printf -- '-------------------------------------------------------------------------------\n'
+    printf -- '\n'
+}
+inspect_run() {
+    comment "Function name:"
+    comment "$1"
+    comment "Function definition:"
+    declare -f "$1"
+    comment "Invocation:"
+    comment "\$ $*"
+    comment "Output of command:"
+    "$@"
+}
+# Make output come out as comments.
+alias echo='echo # '
+
+echo '#=============================================================================='
+echo '# Bash examples, with output of commands.'
+echo '#=============================================================================='
+echo ''
+
+myfunc() {
+    local num_args="$#"
+    echo "number of args: $num_args"
+}
+comment 'Example of a bash function.'
+inspect_run myfunc 1 2 3
+
+# -----------------------------------------------------------------------------
+new_section
+comment "Checking a variable's name and value using the \`declare' shell builtin."
+comment "$ MYVAR=1"
+MYVAR=1
+declare -p MYVAR
+
+# -----------------------------------------------------------------------------
+new_section
 
 comment 'Shell arguments and quoting.'
 
@@ -19,63 +55,55 @@ split6() { for word in  $@;  do echo "\`"$word"\`"; done }
 split7() { for word in "$@"; do echo "\`$word\`";   done }
 split8() { for word in "$@"; do echo "\`"$word"\`"; done }
 show_arguments() {
-    comment 'Number of arguments $# = `'$#\`
-    comment 'All arguments $*   = `'$*\`
-    comment 'All arguments $@   = `'$@\`
-    comment 'All arguments "$*" = `'"$*"\`
-    comment 'All arguments "$@" = `'"$@"\`
-    comment 'Script name $0 = `'$0\`
-    comment '1st argument $1   = `'$1\`
-    comment '2nd argument $2   = `'$2\`
-    comment '3rd argument $3   = `'$3\`
-    comment '4th argument $4   = `'$4\`
-    comment '1st argument "$1" = `'"$1"\`
-    comment '2nd argument "$2" = `'"$2"\`
-    comment '3rd argument "$3" = `'"$3"\`
-    comment '4th argument "$4" = `'"$4"\`
+    comment '# Number of arguments $# = `'$#\`
+    comment '# All arguments $*   = `'$*\`
+    comment '# All arguments $@   = `'$@\`
+    comment '# All arguments "$*" = `'"$*"\`
+    comment '# All arguments "$@" = `'"$@"\`
+    comment '# Script name $0 = `'$0\`
+    comment '# 1st argument $1   = `'$1\`
+    comment '# 2nd argument $2   = `'$2\`
+    comment '# 3rd argument $3   = `'$3\`
+    comment '# 4th argument $4   = `'$4\`
+    comment '# 1st argument "$1" = `'"$1"\`
+    comment '# 2nd argument "$2" = `'"$2"\`
+    comment '# 3rd argument "$3" = `'"$3"\`
+    comment '# 4th argument "$4" = `'"$4"\`
+    # TODO: make a for loop to do this?
     declare -f split1
+    comment "Output of split1:"
     split1 "$@"
     declare -f split2
+    comment "Output of split2:"
     split2 "$@"
     declare -f split3
+    comment "Output of split3:"
     split3 "$@"
     declare -f split4
+    comment "Output of split4:"
     split4 "$@"
     declare -f split5
+    comment "Output of split5:"
     split5 "$@"
     declare -f split6
+    comment "Output of split6:"
     split6 "$@"
     declare -f split7
+    comment "Output of split7:"
     split7 "$@"
     declare -f split8
-    comment "This is probably the one you want."
+    comment "Output of split8:"
+    comment "(This is probably the one you want.)"
     split8 "$@"
 }
-comment "Running this:"
-comment '$ show_arguments \'*\' \'\~\' \"\'\$HOME\'\" \''   . .. ... .....    '\'
-show_arguments '*' '~' '$HOME' '   . .. ... .....    ' 
+inspect_run show_arguments '*' '~' '$HOME' '   . .. ... .....    ' 
 # http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs
 # http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters
 # http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script
 # http://qntm.org/bash
 
-comment '-------------------------------------------------------------------------------'
-comment 'Bash functions.'
-function myfunc {
-    local num_args="$#"
-    echo "number of args: $num_args"
-}
-declare -f myfunc
-comment 'Invoke the function:'
-comment '$ myfunc 1 2 3'
-myfunc 1 2 3
-
-comment '-------------------------------------------------------------------------------'
-echo "Checking a variable's name and value using the \`declare' shell builtin."
-MYVAR=1
-declare -p MYVAR
-
-echo '-------------------------------------------------------------------------------'
+# -----------------------------------------------------------------------------
+new_section
 file_exists() {
     echo "Testing if '"$MYFILE"' exists."
     if test -e example.txt
@@ -87,11 +115,14 @@ file_exists() {
         return 1
     fi
 }
+comment "$ MYFILE='example.txt'"
 MYFILE='example.txt'
+comment "$ file_exists $MYFILE"
 file_exists $MYFILE
 
-echo '-------------------------------------------------------------------------------'
-echo "Testing a command's return value."
+# -----------------------------------------------------------------------------
+new_section
+comment "Testing a command's return value."
 example_error() {
     echo "returning 1"
     return 1;
@@ -104,10 +135,14 @@ check_exit_code() {
         echo 'The command `'$*"' failed with return code $ERROR_CODE."
     fi
 }
+declare -f example_error
+declare -f check_exit_code
+comment "$ check_exit_code example_error"
 check_exit_code example_error
 
-echo '-------------------------------------------------------------------------------'
-printf "Testing piped commands for errors.\n"
+# -----------------------------------------------------------------------------
+new_section
+comment "Testing piped commands for errors."
 no_error(){
     echo "returning 0"
     return 0
