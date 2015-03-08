@@ -10,6 +10,7 @@
 
 # TODO: make all output either comments or executable as a shell script,
 # so that e.g. syntax highlighting works correctly.
+# TODO: `declare -f' does not show comments. This is a bit of a problem.
 
 comment() {
     printf -- "\t# "
@@ -20,11 +21,11 @@ new_section() {
     printf -- '#------------------------------------------------------------------------------\n'
     printf -- '\n'
 }
-inspect_run_function() {
-    comment "Function with arguments:"
-    echo "# $*"
-    comment "Output of running function:"
-    "$@"
+inspect_run() {
+    comment "Running this:"
+    echo "$*"
+    comment "Output:"
+    $@
 }
 
 printf -- '#==============================================================================\n'
@@ -32,18 +33,28 @@ printf -- '# Bash examples, with output of commands.                            
 printf -- '#==============================================================================\n'
 printf -- '\n'
 
+# -----------------------------------------------------------------------------
+new_section
+
 comment 'Example of a bash function.'
 myfunc() {
     local num_args="$#"
-    echo "# number of args: $num_args"
+    echo "# Number of args: $num_args"
 }
 declare -f myfunc
-inspect_run_function myfunc 1 2 3
+inspect_run myfunc 1 2 3
+
+# -----------------------------------------------------------------------------
+new_section
 
 comment "Checking a variable's name and value using the \`declare' shell builtin."
-comment "MYVAR=1"
-MYVAR=1
-declare -p MYVAR
+#comment "MYVAR=1"
+#MYVAR=1
+#declare -p MYVAR
+
+inspect_run export MYVAR=1
+
+inspect_run declare -p MYVAR
 
 # -----------------------------------------------------------------------------
 new_section
@@ -62,63 +73,81 @@ file_exists() {
     fi
 }
 declare -f file_exists
-inspect_run_function file_exists 'filename with spaces.txt'
+inspect_run file_exists 'filename with spaces.txt'
 
 # -----------------------------------------------------------------------------
 new_section
-echo 'Test if a string is not empty.'
-VAR="hello"
-declare -p VAR
-if [ -n "$VAR" ]; then
-    echo "VAR is not empty"
-fi
+comment 'Test if a variable is empty.'
+empty() {
+    local VAR=""
+    if test -z "$VAR"
+    then
+        echo "VAR is empty."
+    else
+        echo "VAR is not empty."
+    fi
+}
+declare -f empty
+inspect_run empty
+
+comment 'test -z == ! test -n'
+comment "http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/"
+
+# -----------------------------------------------------------------------------
+
+new_section
+comment 'Test if a variable is not empty.'
+not_empty() {
+    local VAR="hello"
+    if test -n "$VAR"
+    then
+        echo "VAR is not empty."
+    else
+        echo "VAR is empty."
+    fi
+}
+declare -f not_empty
+inspect_run not_empty
+
+comment 'test -n == ! test -z'
 
 # -----------------------------------------------------------------------------
 new_section
-echo 'Test if a variable is empty.'
-VAR2=""
-declare -p VAR2
-if [ -z "$EMPTY" ]; then
-    echo "VAR is empty"
-fi
-# http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/
-
-
-# -----------------------------------------------------------------------------
-new_section
-echo 'Using the if construct with arithmetic conditionals.'
+comment 'Using the if construct with arithmetic conditionals.'
 check_num_arguments() {
-    if [ $# -lt 1 ]; then
+    if test $# -lt 1
+    then
         echo "No arguments."
     else
         echo "Number of arguments: $#"
         echo "Arguments: $*"
     fi
 }
-check_num_arguments
+declare -f check_num_arguments
+inspect_run check_num_arguments
 
-# Integer comparison in if statements compared to C.
-# Bash if: eq, ne, gt, ge, lt, le
-#    C if: ==, !=, > , >=, < , <=
+comment 'Integer comparison in if statements compared to C.'
+comment ' Bash if: eq, ne, gt, ge, lt, le'
+comment '    C if: ==, !=, > , >=, < , <='
 
-echo '-------------------------------------------------------------------------------'
-echo 'Example of using the `if` construct with an explicit process return value.'
-echo 'This is not unusual; in fact, `if` construct always tests the return value of a process,'
-echo 'since [ ] is shorthand for the `test` command.'
+# -----------------------------------------------------------------------------
+new_section
+comment 'Using the `if` construct with an explicit process return value.'
 process_return_value_conditional() {
     if ping -c 1 google.com > /dev/null
     then
-            echo '# -------------------------------------------------------------------------------'
             echo '# Succesfully pinged google.com.'
     else
-            echo '# -------------------------------------------------------------------------------'
             echo '# Cannot ping google.com.'
     fi
 }
-# Put it in background in case it takes a while to return.
-process_return_value_conditional &
+declare -f process_return_value_conditional
+inspect_run process_return_value_conditional
 
-# TODO: example of negating return value with !
+comment 'The `if` construct always tests the return value of a process,'
+comment 'since [ ] is shorthand for the `test` command.'
+comment 'http://unix.stackexchange.com/a/99186'
+# TODO: example of negating return value with `!'.
 
 # -----------------------------------------------------------------------------
 new_section
@@ -183,7 +212,7 @@ show_arguments() {
     for i in {1..8}
     do
         declare -f split$i
-        inspect_run_function split$i "$@"
+        inspect_run split$i "$@"
     done
     echo "# split8 is probably the one you want."
 }
@@ -193,6 +222,8 @@ echo "show_arguments '-e' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ..
 # Alternative methods to achive this:
 # printf -- "show_arguments '-e' '*' '~' '\$HOME' '\\\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' \n"
 # echo show_arguments\ \'-e\'\ \'\*\'\ \'\~\'\ \'\$HOME\'\ \'\\\'\ \'\`pwd\`\'\ \'\$\(pwd\)\'\ \ \'\ \ \ \.\ \.\.\ \.\.\.\ \.\.\.\.\.\ \ \ \ \'\ 
+# "A single quote may not occur between single quotes, even when preceded by a backslash."
+# https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html#Single-Quotes
 
 shopt -s expand_aliases
 alias invocation="show_arguments '-e' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
@@ -201,8 +232,8 @@ invocation
 alias invocation2='show_arguments '\''-e'\'' '\''*'\'' '\''~'\'' '\''$HOME'\'' '\''\'\'' '\''`pwd`'\'' '\''$(pwd)'\''  '\''   . .. ... .....    '\'''
 alias invocation2
 invocation2
-inspect_run_function show_arguments '-e' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
-inspect_run_function show_arguments '-e' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
+inspect_run show_arguments '-e' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
+inspect_run show_arguments '-e' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
 
 comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
 comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
@@ -257,7 +288,21 @@ check_exit_code() {
         return 1
     fi
 }
-inspect_run_function check_exit_code example_error "unnecessary" "arguments"
+inspect_run check_exit_code example_error "unnecessary" "arguments"
+
+# -----------------------------------------------------------------------------
+new_section
+comment "Testing if an external program is installed."
+
+is_wget_installed() {
+    if ! hash wget
+    then
+        echo "Error: Please install wget."
+        return 1
+    fi
+}
+
+comment "https://stackoverflow.com/questions/592620/check-if-a-program-exists-from-a-bash-script"
 
 # -----------------------------------------------------------------------------
 new_section
@@ -291,15 +336,15 @@ declare -f print_pipe_errors
 declare -f no_error
 declare -f another_error
 
-inspect_run_function print_pipe_errors 'no_error'
+inspect_run print_pipe_errors 'no_error'
 
-inspect_run_function print_pipe_errors 'example_error | another_error'
+inspect_run print_pipe_errors 'example_error | another_error'
 
-inspect_run_function print_pipe_errors 'no_error | no_error | example_error'
+inspect_run print_pipe_errors 'no_error | no_error | example_error'
 
-inspect_run_function print_pipe_errors 'no_error | example_error | another_error'
+inspect_run print_pipe_errors 'no_error | example_error | another_error'
 
-inspect_run_function print_pipe_errors 'echo "# Hello, world." | tr . !'
+inspect_run print_pipe_errors 'echo "# Hello, world." | tr . !'
 
 # -----------------------------------------------------------------------------
 new_section
