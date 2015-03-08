@@ -118,6 +118,8 @@ process_return_value_conditional() {
 # Put it in background in case it takes a while to return.
 process_return_value_conditional &
 
+# TODO: example of negating return value with !
+
 # -----------------------------------------------------------------------------
 new_section
 # Strip the file extension for e.g. generating the name of an output file.
@@ -185,13 +187,21 @@ show_arguments() {
     done
     echo "# split8 is probably the one you want."
 }
+declare -f show_arguments
 comment "This is how it looks before the shell does word splitting and such:"
 echo "show_arguments '-e' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
 # Alternative methods to achive this:
 # printf -- "show_arguments '-e' '*' '~' '\$HOME' '\\\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' \n"
 # echo show_arguments\ \'-e\'\ \'\*\'\ \'\~\'\ \'\$HOME\'\ \'\\\'\ \'\`pwd\`\'\ \'\$\(pwd\)\'\ \ \'\ \ \ \.\ \.\.\ \.\.\.\ \.\.\.\.\.\ \ \ \ \'\ 
 
-declare -f show_arguments
+shopt -s expand_aliases
+alias invocation="show_arguments '-e' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
+alias invocation
+invocation
+alias invocation2='show_arguments '\''-e'\'' '\''*'\'' '\''~'\'' '\''$HOME'\'' '\''\'\'' '\''`pwd`'\'' '\''$(pwd)'\''  '\''   . .. ... .....    '\'''
+alias invocation2
+invocation2
+inspect_run_function show_arguments '-e' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
 inspect_run_function show_arguments '-e' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
 
 comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
