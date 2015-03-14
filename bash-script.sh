@@ -1,16 +1,7 @@
 #!/usr/bin/env bash
 
-## Override echo to make output come out as comments.
-#echo() {
-#    #printf '# '
-#    builtin echo "$*"
-#}
-## Decided it wasn't worth it,
-## since it messes up too much other stuff like return codes.
-
-# TODO: make all output either comments or executable as a shell script,
-# so that e.g. syntax highlighting works correctly.
 # TODO: `declare -f' does not show comments. This is a bit of a problem.
+# DONE: Make output runnable as a shell command.
 
 comment() {
     printf -- "\t# "
@@ -18,20 +9,28 @@ comment() {
 }
 new_section() {
     printf -- '\n'
-    printf -- '#------------------------------------------------------------------------------\n'
+    comment '------------------------------------------------------------------------------'
     printf -- '\n'
 }
+# We can't use `set -v`,
+# because we won't be able to comment all the output,
+# and when we turn it off with `set +v`,
+# that command will be echoed as well.
 inspect_run() {
-    comment "Running this:"
     echo "$*"
-    comment "Output:"
-    $@
+    "$@" |& sed 's/^/# /'
 }
 
-printf -- '#==============================================================================\n'
-printf -- '# Bash examples, with output of commands.                                      \n'
-printf -- '#==============================================================================\n'
-printf -- '\n'
+
+comment '=============================================================================='
+comment ' Bash examples, with output of commands.                                      '
+comment '=============================================================================='
+comment ''
+
+comment "Conventions:"
+comment '-- Output is commented with # and a space, but not indented.'
+comment '-- Actual comments are indented and commented.'
+comment '-- Markdown-style backticks for quoting commands, e.g. `if`, not '"'if'"' or `if'"'"'.'
 
 # -----------------------------------------------------------------------------
 new_section
@@ -39,7 +38,7 @@ new_section
 comment 'Example of a bash function.'
 myfunc() {
     local num_args="$#"
-    echo "# Number of args: $num_args"
+    echo "Number of args: $num_args"
 }
 declare -f myfunc
 inspect_run myfunc 1 2 3
@@ -47,10 +46,7 @@ inspect_run myfunc 1 2 3
 # -----------------------------------------------------------------------------
 new_section
 
-comment "Checking a variable's name and value using the \`declare' shell builtin."
-#comment "MYVAR=1"
-#MYVAR=1
-#declare -p MYVAR
+comment "Checking a variable's name and value using the \`declare\` shell builtin."
 
 inspect_run export MYVAR=1
 
@@ -58,17 +54,17 @@ inspect_run declare -p MYVAR
 
 # -----------------------------------------------------------------------------
 new_section
-comment "Using 'if' to check if a file exists."
+comment 'Using `if` to check if a file exists.'
 
 file_exists() {
     local filename="$*"
-    echo "# Testing if file \`$filename' exists..."
+    echo "Testing if file \`$filename\` exists..."
     if test -e "$filename"
     then
-        echo "# \`$filename' exists."
+        echo "\`$filename\` exists."
         return 0
     else
-        echo "# \`$filename' does not exist."
+        echo "\`$filename\` does not exist."
         return 1
     fi
 }
@@ -90,6 +86,8 @@ empty() {
 declare -f empty
 inspect_run empty
 
+echo ''
+comment 'This essentially means:'
 comment 'test -z == ! test -n'
 comment "http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/"
 
@@ -126,7 +124,7 @@ check_num_arguments() {
 declare -f check_num_arguments
 inspect_run check_num_arguments
 
-comment 'Integer comparison in if statements compared to C.'
+comment 'Integer comparison in `if` statements compared to C.'
 comment ' Bash if: eq, ne, gt, ge, lt, le'
 comment '    C if: ==, !=, > , >=, < , <='
 
@@ -134,18 +132,19 @@ comment '    C if: ==, !=, > , >=, < , <='
 new_section
 comment 'Using the `if` construct with an explicit process return value.'
 process_return_value_conditional() {
-    if ping -c 1 google.com > /dev/null
+    local URL='localhost'
+    if ping -c 1 "$URL" > /dev/null
     then
-            echo '# Succesfully pinged google.com.'
+            echo "Succesfully pinged $URL."
     else
-            echo '# Cannot ping google.com.'
+            echo "Cannot ping $URL."
     fi
 }
 declare -f process_return_value_conditional
 inspect_run process_return_value_conditional
 
 comment 'The `if` construct always tests the return value of a process,'
-comment 'since [ ] is shorthand for the `test` command.'
+comment 'since `[` is shorthand for the `test` command that must have a matching `]` bracket.'
 comment 'http://unix.stackexchange.com/a/99186'
 # TODO: example of negating return value with `!'.
 
@@ -155,18 +154,18 @@ new_section
 strip_extensions() {
     for myfile in *.txt
     do
-        echo "Filename with extension: $myfile"
+        echo "Filename with extension: \`$myfile\`"
         myfile_no_extension="${myfile%.*}"
-        echo "Filename without extension: $myfile_no_extension"
+        echo "Filename without extension: \`$myfile_no_extension\`"
     done
 }
 declare -f strip_extensions
-strip_extensions
+inspect_run strip_extensions
 
 # http://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
 # -----------------------------------------------------------------------------
 new_section
-echo '# Run through each line of a text file.'
+comment 'Run through each line of a text file.'
 readlines() {
     while read MYVAR
     do
@@ -174,67 +173,71 @@ readlines() {
     done < ./example.txt
 }
 declare -f readlines
-readlines
+inspect_run readlines
 # http://stackoverflow.com/questions/1521462/looping-through-the-content-of-a-file-in-bash
 
 # -----------------------------------------------------------------------------
 new_section
-echo 'Read a text file into a shell variable.'
-TEXTFILE_CONTENTS=$(cat -- "./example.txt")
-declare -p TEXTFILE_CONTENTS
+comment 'Read a text file into a shell variable.'
+store_file_into_variable() {
+    echo 'Contents of "example.txt":'
+    cat -- "./example.txt"
+    TEXTFILE_CONTENTS=$(cat -- "./example.txt")
+    echo 'Contents of $TEXTFILE_CONTENTS:'
+    echo "$TEXTFILE_CONTENTS"
+}
+declare -f store_file_into_variable
+inspect_run store_file_into_variable
 
 # -----------------------------------------------------------------------------
 new_section
 
 comment 'Shell arguments and quoting.'
 
-split1() { for word in  $*;  do printf '# '; echo $word;   done }
-split2() { for word in  $*;  do printf '# '; echo "$word"; done }
-split3() { for word in "$*"; do printf '# '; echo $word;   done }
-split4() { for word in "$*"; do printf '# '; echo "$word"; done }
-split5() { for word in  $@;  do printf '# '; echo $word;   done }
-split6() { for word in  $@;  do printf '# '; echo "$word"; done }
-split7() { for word in "$@"; do printf '# '; echo $word;   done }
-split8() { for word in "$@"; do printf '# '; echo "$word"; done }
+split1() { for word in  $*;  do echo $word;   done }
+split2() { for word in  $*;  do echo "$word"; done }
+split3() { for word in "$*"; do echo $word;   done }
+split4() { for word in "$*"; do echo "$word"; done }
+split5() { for word in  $@;  do echo $word;   done }
+split6() { for word in  $@;  do echo "$word"; done }
+split7() { for word in "$@"; do echo $word;   done }
+split8() { for word in "$@"; do echo "$word"; done }
+for i in {1..8}
+do
+    declare -f split$i
+done
+comment "The split8() function is probably the one you want."
+comment "See below for the reason why."
 show_arguments() {
-    echo '# Number of arguments $# = `'$#\`
-    echo '# All arguments $*   = `'$*\`
-    echo '# All arguments $@   = `'$@\`
-    echo '# All arguments "$*" = `'"$*"\`
-    echo '# All arguments "$@" = `'"$@"\`
-    echo '# Script name $0 = `'$0\`
-    echo '# Arguments 1 to '"$#"':'
+    echo 'Number of arguments $# = `'$#\`
+    echo 'All arguments $*   = `'$*\`
+    echo 'All arguments $@   = `'$@\`
+    echo 'All arguments "$*" = `'"$*"\`
+    echo 'All arguments "$@" = `'"$@"\`
+    echo 'Script name $0 = `'$0\`
+    echo 'Arguments 1 to '"$#"':'
     for arg in "$@"
     do
         # Use backticks to make whitespace visible.
-        echo "# \`$arg\`"
+        echo "\`$arg\`"
     done
     for i in {1..8}
     do
-        declare -f split$i
-        inspect_run split$i "$@"
+        echo "Running split$i():"
+        split$i "$@"
     done
-    echo "# split8 is probably the one you want."
 }
 declare -f show_arguments
-comment "This is how it looks before the shell does word splitting and such:"
-echo "show_arguments '-e' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
 # Alternative methods to achive this:
 # printf -- "show_arguments '-e' '*' '~' '\$HOME' '\\\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' \n"
 # echo show_arguments\ \'-e\'\ \'\*\'\ \'\~\'\ \'\$HOME\'\ \'\\\'\ \'\`pwd\`\'\ \'\$\(pwd\)\'\ \ \'\ \ \ \.\ \.\.\ \.\.\.\ \.\.\.\.\.\ \ \ \ \'\ 
 # "A single quote may not occur between single quotes, even when preceded by a backslash."
 # https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html#Single-Quotes
 
-shopt -s expand_aliases
-alias invocation="show_arguments '-e' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
-alias invocation
-invocation
-alias invocation2='show_arguments '\''-e'\'' '\''*'\'' '\''~'\'' '\''$HOME'\'' '\''\'\'' '\''`pwd`'\'' '\''$(pwd)'\''  '\''   . .. ... .....    '\'''
-alias invocation2
-invocation2
-inspect_run show_arguments '-e' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
-inspect_run show_arguments '-e' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
-
+comment "This is how it looks before the shell does word splitting and such:"
+echo "show_arguments '-e \n' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
+comment "Now let's run the command with those arguments:"
+inspect_run show_arguments '-e \n' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
 comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
 comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
 comment "http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script"
@@ -242,16 +245,16 @@ comment "http://qntm.org/bash"
 
 # -----------------------------------------------------------------------------
 new_section
-comment "Debug a function using the FUNCNAME array."
+comment "Debug a function using the \`FUNCNAME\` array."
 
 this_function() {
-    echo "# From function \`${FUNCNAME[0]}' on line $LINENO:"
+    echo "From function \`${FUNCNAME[0]}\` in \`$0\` on line $LINENO:"
     # If we used "${FUNCNAME[@]}"
     # we would get all the elements,
     # but we only want the second one onward.
     for func in "${FUNCNAME[@]:1}"
     do
-        echo "# called by \`$func'"
+        echo "called by \`$func\`"
     done
 }
 declare -f this_function
@@ -265,7 +268,14 @@ caller_2() {
 caller_3() {
     caller_2
 }
-caller_3
+for i in {1..3}
+do
+    declare -f caller_$i
+done
+# We have to do this manually,
+# or the inspect_run function will show up in the output.
+echo 'caller_3'
+caller_3 |& sed 's/^/# /'
 
 comment "http://stackoverflow.com/questions/9146623/in-bash-is-it-possible-to-get-the-function-name-in-function-body"
 comment "http://www.tldp.org/LDP/abs/html/arrays.html"
@@ -274,20 +284,22 @@ comment "http://www.tldp.org/LDP/abs/html/arrays.html"
 new_section
 comment "Testing a command's return value."
 example_error() {
-    echo "# ${FUNCNAME[0]}: Returning error code 1."
+    echo "From ${FUNCNAME[0]}: Returning error code 1."
     return 1;
 }
 declare -f example_error
 
 check_exit_code() {
-    printf "# ${FUNCNAME[0]}: Running this:\n$*\n"
+    printf "From ${FUNCNAME[0]}: Running this:\n$*\n"
     "$@"
     ERROR_CODE=$?
     if [ $ERROR_CODE -ne 0 ]; then
-        echo "# ${FUNCNAME[0]}: The command \`$*' failed with return code $ERROR_CODE."
+        echo "From ${FUNCNAME[0]}: The command \`$*' failed with return code $ERROR_CODE."
         return 1
     fi
 }
+declare -f check_exit_code
+
 inspect_run check_exit_code example_error "unnecessary" "arguments"
 
 # -----------------------------------------------------------------------------
@@ -308,15 +320,15 @@ comment "https://stackoverflow.com/questions/592620/check-if-a-program-exists-fr
 new_section
 comment "Testing piped commands for errors."
 no_error(){
-    echo "# ${FUNCNAME[0]}: returning 0"
+    echo "${FUNCNAME[0]}: returning 0"
     return 0
 }
 another_error() {
-    echo "# ${FUNCNAME[0]}: returning 42"
+    echo "${FUNCNAME[0]}: returning 42"
     return 42;
 }
 print_pipe_errors() {
-    printf "# ${FUNCNAME[0]}: Running this:\n$*\n"
+    printf "${FUNCNAME[0]}: Running this:\n$*\n"
     eval "$*"'; RETURN_CODE_ARRAY=(${PIPESTATUS[@]})'
     # DANGER: this is for demonstration purposes only.
     # http://mywiki.wooledge.org/BashFAQ/050
@@ -326,9 +338,9 @@ print_pipe_errors() {
     declare -p RETURN_CODE_ARRAY
     for INDEX in ${!RETURN_CODE_ARRAY[*]}
     do
-        echo "# $INDEX return code: ${RETURN_CODE_ARRAY[$INDEX]}"
+        echo "$INDEX return code: ${RETURN_CODE_ARRAY[$INDEX]}"
     done
-    echo '# Extracted all return values.'
+    echo 'Extracted all return values.'
     echo ''
     # http://www.linuxjournal.com/content/bash-arrays
 }
@@ -344,7 +356,7 @@ inspect_run print_pipe_errors 'no_error | no_error | example_error'
 
 inspect_run print_pipe_errors 'no_error | example_error | another_error'
 
-inspect_run print_pipe_errors 'echo "# Hello, world." | tr . !'
+inspect_run print_pipe_errors 'echo "Hello, world." | tr . !'
 
 # -----------------------------------------------------------------------------
 new_section
