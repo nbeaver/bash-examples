@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 # TODO: `declare -f' does not show comments. This is a bit of a problem.
+# We can't use `set -v`,
+# because we won't be able to comment all the output,
+# and when we turn it off with `set +v`,
+# that command will be echoed as well.
 # DONE: Make output runnable as a shell command.
 
 comment() {
@@ -12,10 +16,6 @@ new_section() {
     comment '------------------------------------------------------------------------------'
     printf -- '\n'
 }
-# We can't use `set -v`,
-# because we won't be able to comment all the output,
-# and when we turn it off with `set +v`,
-# that command will be echoed as well.
 inspect_run() {
     echo "$*"
     "$@" |& sed 's/^/# /'
@@ -28,9 +28,9 @@ comment '=======================================================================
 comment ''
 
 comment "Conventions:"
-comment '-- Output is commented with # and a space, but not indented.'
-comment '-- Actual comments are indented and commented.'
-comment '-- Markdown-style backticks for quoting commands, e.g. `if`, not '"'if'"' or `if'"'"'.'
+comment '- Output is commented with # and a space, but not indented.'
+comment '- Actual comments are indented and commented.'
+comment "- Markdown-style backticks for quoting commands, e.g. \`if\`, not 'if' or \`if'."
 
 # -----------------------------------------------------------------------------
 new_section
@@ -48,8 +48,11 @@ new_section
 
 comment "Checking a variable's name and value using the \`declare\` shell builtin."
 
-inspect_run export MYVAR=1
-
+echo 'MYVAR=1'
+MYVAR=1
+# TODO: why does
+# inspect_run export "MYVAR=1"
+# throw "MYVAR: not found"?
 inspect_run declare -p MYVAR
 
 # -----------------------------------------------------------------------------
@@ -192,7 +195,41 @@ inspect_run store_file_into_variable
 # -----------------------------------------------------------------------------
 new_section
 
-comment 'Shell arguments and quoting.'
+comment 'Quoting and eval.'
+
+using_eval() {
+    local temp='echo $SHELL'
+    declare -p temp
+    echo $temp
+    echo "$temp"
+    echo '$temp'
+    eval $temp
+    eval "$temp"
+    eval '$temp'
+}
+declare -f using_eval
+inspect_run using_eval
+
+# -----------------------------------------------------------------------------
+new_section
+
+comment 'Indirect expansion.'
+
+indirect_expansion() {
+    local temp='SHELL'
+    declare -p temp
+    echo "$temp"
+    echo "${temp}"
+    echo "${!temp}"
+}
+declare -f indirect_expansion
+inspect_run indirect_expansion
+
+comment "http://wiki.bash-hackers.org/syntax/pe#indirection"
+# -----------------------------------------------------------------------------
+new_section
+
+comment 'Shell arguments and the difference between `$*` and `$@`.'
 
 split1() { for word in  $*;  do echo $word;   done }
 split2() { for word in  $*;  do echo "$word"; done }
@@ -234,10 +271,10 @@ declare -f show_arguments
 # "A single quote may not occur between single quotes, even when preceded by a backslash."
 # https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html#Single-Quotes
 
-comment "This is how it looks before the shell does word splitting and such:"
-echo "show_arguments '-e \n' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
+comment "This is how it looks in the script before the shell does quote removal and expansion and such:"
+echo "show_arguments '-e \n' '{a..z}' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
 comment "Now let's run the command with those arguments:"
-inspect_run show_arguments '-e \n' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
+inspect_run show_arguments '-e \n' '{a..z}' '$((2+2))' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
 comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
 comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
 comment "http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script"
@@ -361,27 +398,9 @@ inspect_run print_pipe_errors 'echo "Hello, world." | tr . !'
 # -----------------------------------------------------------------------------
 new_section
 
-comment "Shell options."
+comment "Check if an item is in an array."
 
-declare -A long_option
-long_option[a]=allexport
-long_option[B]=braceexpand
-#${long_option["$*"]}
-#declare -p long_option
-comment "http://www.linuxjournal.com/content/bash-associative-arrays"
-
-check_short_option() {
-    # e.g. $- = himBH
-    if [[ $- =~ $* ]]
-    then
-        echo "Short option \`$*' is enabled: \$- = $-"
-        return 0
-    else
-        echo "Short option \`$*' is disabled: \$- = $-"
-        return 1
-    fi
-}
-
+#TODO: check for empty array
 in_array() {
     local item="$1"
     local array="$2[@]"
@@ -389,15 +408,63 @@ in_array() {
     do
         if [ "$item" == "$i" ]
         then
+            echo "\`$item\` in ${array[@]}"
             return 0
         fi
     done
-    echo "$item not in ${array[@]}"
+    echo "\`$item\` not in ${array[@]}"
     return 1
 }
-# https://raymii.org/s/snippets/Bash_Bits_Check_If_Item_Is_In_Array.html
-# http://stackoverflow.com/questions/14366390/bash-if-condition-check-if-element-is-present-in-array
-# http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value
+declare -f in_array
+
+MY_ARRAY=("first" "second" "third")
+
+declare -p MY_ARRAY
+
+inspect_run in_array "second" MY_ARRAY
+
+inspect_run in_array "fourth" MY_ARRAY
+
+comment "https://raymii.org/s/snippets/Bash_Bits_Check_If_Item_Is_In_Array.html"
+comment "http://stackoverflow.com/questions/14366390/bash-if-condition-check-if-element-is-present-in-array"
+comment "http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value"
+
+# -----------------------------------------------------------------------------
+new_section
+
+comment "Associative arrays."
+
+declare -A long_option
+long_option[a]=allexport
+long_option[B]=braceexpand
+
+declare -p long_option
+
+echo 'echo ${long_option["a"]}'
+eval 'echo ${long_option["a"]}'
+# We can't use inspect_run here,
+# because the shell will expand it too soon,
+# and it will just be this:
+# echo allexport
+
+comment "http://www.linuxjournal.com/content/bash-associative-arrays"
+
+# -----------------------------------------------------------------------------
+new_section
+
+comment "Shell options."
+
+check_short_option() {
+    # e.g. $- = himBH
+    if [[ $- =~ $* ]]
+    then
+        echo "Short option \`$*\` is enabled: \$- = $-"
+        return 0
+    else
+        echo "Short option \`$*\` is disabled: \$- = $-"
+        return 1
+    fi
+}
 
 check_long_option() {
     local TMP="$IFS"
@@ -433,9 +500,24 @@ check_option() {
     fi
 }
 
+# -----------------------------------------------------------------------------
+new_section
 
-# Make unset variables (and parameters other than the special parameters "@" and "*")
-# produce an 'unbound variable' error.
+comment "Turn on verbose mode, so each line (including comments) is echoed, then run."
+set -v
+# Turn on verbose mode.
+set -v
+# This is a comment.
+echo "# Hello."
+# Turn off verbose mode.
+set +v
+
+
+# -----------------------------------------------------------------------------
+new_section
+
+comment 'Make unset variables (and parameters other than the special parameters "@" and "*")'
+comment "produce an 'unbound variable' error."
 
 set -u
 check_option nounset
