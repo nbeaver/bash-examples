@@ -17,8 +17,8 @@ new_section() {
     printf -- '\n'
 }
 inspect_run() {
-    echo "$*"
-    $* |& sed 's/^/# /'
+    printf "%q\n" "$*"
+    "$@" |& sed 's/^/# /'
 }
 
 single_quote()
@@ -29,10 +29,7 @@ single_quote()
 
 echo_eval() {
     echo "$@"
-    echo "$*"
-    echo $(single_quote "$*")
-    echo $(single_quote "$@")
-    eval "$*" |& sed 's/^/# /'
+    eval "$@" |& sed 's/^/# /'
 }
 
 # Decided this wasn't worth it.
@@ -279,25 +276,38 @@ declare -f indirect_expansion
 inspect_run indirect_expansion
 
 comment "http://wiki.bash-hackers.org/syntax/pe#indirection"
+
+# -----------------------------------------------------------------------------
+new_section
+comment 'The difference between the positional parameters `*` and `@` in a `for` loop.'
+
+split1() { echo '$*='$*    ; for arg in  $*;  do echo "$arg"; done }
+split2() { echo '$@='$@    ; for arg in  $@;  do echo "$arg"; done }
+split3() { echo '"$*"='"$*"; for arg in "$*"; do echo "$arg"; done }
+split4() { echo '"$@"='"$@"; for arg in "$@"; do echo "$arg"; done }
+run_splits() {
+    # TODO: make an example where IFS is changed.
+    printf "IFS=%q\n" "$IFS"
+    for i in {1..4}
+    do
+        declare -f split$i
+        local arg1='  -e  \n  '
+        local arg2='  *  '
+        echo "split$i '$arg1' '$arg2'"
+        split$i "$arg1" "$arg2" |& sed 's/^/# /'
+    done
+}
+run_splits
+comment "The split4() function is almost certainly the one you want."
+
+comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
+comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
+
 # -----------------------------------------------------------------------------
 new_section
 
-comment 'Shell arguments and the difference between `$*` and `$@`.'
+comment 'Shell arguments.'
 
-split1() { for word in  $*;  do echo $word;   done }
-split2() { for word in  $*;  do echo "$word"; done }
-split3() { for word in "$*"; do echo $word;   done }
-split4() { for word in "$*"; do echo "$word"; done }
-split5() { for word in  $@;  do echo $word;   done }
-split6() { for word in  $@;  do echo "$word"; done }
-split7() { for word in "$@"; do echo $word;   done }
-split8() { for word in "$@"; do echo "$word"; done }
-for i in {1..8}
-do
-    declare -f split$i
-done
-comment "The split8() function is probably the one you want."
-comment "See below for the reason why."
 show_arguments() {
     echo 'Number of arguments $# = `'$#\`
     echo 'All arguments $*   = `'$*\`
@@ -311,18 +321,16 @@ show_arguments() {
         # Use backticks to make whitespace visible.
         echo "\`$arg\`"
     done
-    for i in {1..8}
-    do
-        echo "Running split$i():"
-        split$i "$@"
-    done
 }
 declare -f show_arguments
 
-echo_eval $'show_arguments \'-e \\n\' \'{a..z}\' \'!\' \'$((2+2))\' \'*\' \'~\' \'\$HOME\' \'\\\' \'\`pwd\`\' \'\$(pwd)\'  \'   . .. ... .....    \''
+declare -a arg_array=('-e \n' '{a..z}' '!!' '$((2+2))' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ')
 
-comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
-comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
+printf -v arg_string " '%s'" "${arg_array[@]}"
+
+echo_eval $'show_arguments \'-e \\n\' \'{a..z}\' \'!!\' \'$((2+2))\' \'*\' \'~\' \'$HOME\' \'\\\' \'`pwd`\' \'$(pwd)\'  \'   . .. ... .....    \''
+echo_eval "show_arguments $arg_string"
+
 comment "http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script"
 comment "http://qntm.org/bash"
 
