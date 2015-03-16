@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 # TODO: `declare -f' does not show comments. This is a bit of a problem.
 # We can't use `set -v`,
 # because we won't be able to comment all the output,
@@ -19,6 +20,7 @@ new_section() {
 inspect_run() {
     printf "%q\n" "$*"
     "$@" |& sed 's/^/# /'
+    return $?
 }
 
 single_quote()
@@ -30,6 +32,7 @@ single_quote()
 echo_eval() {
     echo "$@"
     eval "$@" |& sed 's/^/# /'
+    return $?
 }
 
 # Decided this wasn't worth it.
@@ -56,6 +59,7 @@ quote_args() {
 }
 
 
+echo '#!/usr/bin/env bash'
 comment '=============================================================================='
 comment ' Bash examples, with output of commands.                                      '
 comment '=============================================================================='
@@ -75,19 +79,18 @@ myfunc() {
     echo "Number of args: $num_args"
 }
 declare -f myfunc
-inspect_run myfunc 1 2 3
+echo_eval 'myfunc 1 2 3'
 
 # -----------------------------------------------------------------------------
 new_section
 
 comment "Checking a variable's name and value using the \`declare\` shell builtin."
 
-echo 'MYVAR=1'
-MYVAR=1
+echo_eval 'MYVAR=1; declare -p MYVAR'
+
 # TODO: why does
 # echo_eval export "MYVAR=1"
 # throw "MYVAR: not found"?
-inspect_run declare -p MYVAR
 
 # -----------------------------------------------------------------------------
 new_section
@@ -106,12 +109,12 @@ file_exists() {
     fi
 }
 declare -f file_exists
-inspect_run file_exists 'filename with spaces.txt'
+echo_eval $'file_exists \'filename with spaces.txt\''
 
 # -----------------------------------------------------------------------------
 new_section
 comment 'Test if a variable is empty.'
-empty() {
+test_empty() {
     local VAR=""
     if test -z "$VAR"
     then
@@ -120,8 +123,8 @@ empty() {
         echo "VAR is not empty."
     fi
 }
-declare -f empty
-inspect_run empty
+declare -f test_empty
+inspect_run test_empty
 
 echo ''
 comment 'This essentially means that:'
@@ -143,8 +146,6 @@ not_empty() {
 }
 declare -f not_empty
 inspect_run not_empty
-
-comment 'test -n == ! test -z'
 
 # -----------------------------------------------------------------------------
 new_section
@@ -228,24 +229,59 @@ inspect_run store_file_into_variable
 
 # -----------------------------------------------------------------------------
 new_section
-
-comment 'The characters that need to be escaped when using double quotes.'
-echo_eval 'echo "$SHELL `echo hi` !!"'
-
-echo_eval 'echo "\$ \` \" \\ \!"'
-
-comment 'The `!` is for history expansions, and failing to escape it will lead to errors such as:'
-comment 'bash: !: event not found'
-comment 'This only happens if the `histexpand` option is set.'
-comment ''
-# TODO: find a better place to put this.
+comment 'Single quotes.'
+comment "These do not require any escaping, even for backslashes."
+comment "The drawback is that single quotes contain escaped single quotes."
+comment 'To quote the `bash` manual:'
 comment '"A single quote may not occur between single quotes, even when preceded by a backslash."'
 comment 'https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html#Single-Quotes'
+comment 'Trying to escape single quotes inside single quotes with a backslash will throw these errors:'
+comment $'bash: unexpected EOF while looking for matching `\'\''
+comment 'bash: syntax error: unexpected end of file'
+
+echo_eval $'echo \'$SHELL `echo hi` \\ *\''
+
+# -----------------------------------------------------------------------------
+new_section
+comment 'ANSI-C single quotes.'
+comment $'These allow escaping of `\"` and `\'` don\'t expand `$` or \'`\'.'
+comment 'This means they can be convenient when regular single quotes or double quotes are not.'
+comment 'https://www.gnu.org/software/bash/manual/html_node/ANSI_002dC-Quoting.html#ANSI_002dC-Quoting'
+
+echo_eval "printf \$'\$SHELL \`echo hi\`\n'"
+echo_eval "printf \$' \a \b \e \E \f \n \r \t \v \\\\ \' \033 \x1B \uA1 \uBE \u212B \U10000 \cI \n'"
+
+echo_eval "printf \$'"'\\\\a \\\\b \\\\e \\\\E \\\\f \\\\n \\\\r \\\\t \\\\v \\\\\ \\\\\'"'"' \\\\033 \\\\x1B \\\\uA1 \\\\uBE \\\\u212B \\\\U212B \\\\cI \\n'"'"
 
 # -----------------------------------------------------------------------------
 new_section
 
-comment 'Quoting and eval.'
+comment "Double quotes."
+comment 'https://www.gnu.org/software/bash/manual/html_node/Double-Quotes.html#Double-Quotes'
+comment "These are the characters that need to be escaped when using double quotes:"
+echo_eval 'echo "\$ \` \" \\ \!"'
+comment "An example of what happens when they aren't escaped:"
+echo_eval 'echo "$SHELL `echo hi`"'
+
+set -o histexpand
+echo "!"
+set +o histexpand
+
+comment 'The `!` is for history expansions, and failing to escape it will lead to errors such as:'
+echo '# bash: !: event not found'
+comment 'but only if the shell is interactive and `histexpand` option is set.'
+comment ''
+comment 'Also, single quotes do not nest inside double quotes.'
+echo_eval $'echo "\'$SHELL\'"'
+comment 'One way around this is to use quote concatenation.'
+echo_eval $'echo "\'"\'$SHELL\'"\'"'
+comment 'Another way is to use ANSI-C single quotes and backslashes.'
+
+
+# -----------------------------------------------------------------------------
+new_section
+
+comment 'Quoting and `eval`.'
 
 using_eval() {
     local temp='echo $SHELL'
@@ -264,6 +300,7 @@ inspect_run using_eval
 new_section
 
 comment 'Indirect expansion.'
+comment "http://wiki.bash-hackers.org/syntax/pe#indirection"
 
 indirect_expansion() {
     local temp='SHELL'
@@ -275,11 +312,12 @@ indirect_expansion() {
 declare -f indirect_expansion
 inspect_run indirect_expansion
 
-comment "http://wiki.bash-hackers.org/syntax/pe#indirection"
 
 # -----------------------------------------------------------------------------
 new_section
 comment 'The difference between the positional parameters `*` and `@` in a `for` loop.'
+comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
+comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
 
 split1() { echo '$*='$*    ; for arg in  $*;  do echo "$arg"; done }
 split2() { echo '$@='$@    ; for arg in  $@;  do echo "$arg"; done }
@@ -300,8 +338,6 @@ run_splits() {
 run_splits
 comment "The split4() function is almost certainly the one you want."
 
-comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
-comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
 
 # -----------------------------------------------------------------------------
 new_section
@@ -391,7 +427,7 @@ check_exit_code() {
 }
 declare -f check_exit_code
 
-inspect_run_with_args check_exit_code example_error "unnecessary" "arguments"
+echo_eval 'check_exit_code example_error "unnecessary" "arguments"'
 
 # -----------------------------------------------------------------------------
 new_section
@@ -410,21 +446,14 @@ comment "https://stackoverflow.com/questions/592620/check-if-a-program-exists-fr
 # -----------------------------------------------------------------------------
 new_section
 comment "Testing piped commands for errors."
-no_error(){
-    echo "${FUNCNAME[0]}: returning 0"
-    return 0
-}
-another_error() {
+comment 'http://www.linuxjournal.com/content/bash-arrays'
+error_42() {
     echo "${FUNCNAME[0]}: returning 42"
     return 42;
 }
 print_pipe_errors() {
     printf "${FUNCNAME[0]}: Running this:\n$*\n"
     eval "$*"'; RETURN_CODE_ARRAY=(${PIPESTATUS[@]})'
-    # DANGER: this is for demonstration purposes only.
-    # http://mywiki.wooledge.org/BashFAQ/050
-    # Also, yes, that really is the best way to copy a Bash array.
-    # https://stackoverflow.com/questions/6565694/left-side-failure-on-pipe-in-bash/6566171
 
     declare -p RETURN_CODE_ARRAY
     for INDEX in ${!RETURN_CODE_ARRAY[*]}
@@ -433,26 +462,32 @@ print_pipe_errors() {
     done
     echo 'Extracted all return values.'
     echo ''
-    # http://www.linuxjournal.com/content/bash-arrays
 }
 declare -f print_pipe_errors
-declare -f no_error
-declare -f another_error
+comment 'DANGER: this is for demonstration purposes only.'
+comment 'http://mywiki.wooledge.org/BashFAQ/050'
+comment 'And yes, this really is the best way to copy a Bash array:'
+comment 'RETURN_CODE_ARRAY=(${PIPESTATUS[@]})'
+comment 'https://stackoverflow.com/questions/6565694/left-side-failure-on-pipe-in-bash/6566171'
+declare -f error_42
 
-inspect_run print_pipe_errors 'no_error'
+echo_eval "print_pipe_errors 'true'"
 
-inspect_run print_pipe_errors 'example_error | another_error'
+echo_eval "print_pipe_errors 'false | error_42'"
 
-inspect_run print_pipe_errors 'no_error | no_error | example_error'
+echo_eval "print_pipe_errors 'true | true | false'"
 
-inspect_run print_pipe_errors 'no_error | example_error | another_error'
+echo_eval "print_pipe_errors 'true | false | error_42'"
 
-inspect_run print_pipe_errors 'echo "Hello, world." | tr . !'
+echo_eval $'print_pipe_errors \'echo "Hello, world." | tr . !\''
 
 # -----------------------------------------------------------------------------
 new_section
 
 comment "Check if an item is in an array."
+comment "https://raymii.org/s/snippets/Bash_Bits_Check_If_Item_Is_In_Array.html"
+comment "http://stackoverflow.com/questions/14366390/bash-if-condition-check-if-element-is-present-in-array"
+comment "http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value"
 
 #TODO: check for empty array
 in_array() {
@@ -479,15 +514,12 @@ echo_eval 'in_array "second" MY_ARRAY'
 
 echo_eval 'in_array "fourth" MY_ARRAY'
 
-echo ""
-comment "https://raymii.org/s/snippets/Bash_Bits_Check_If_Item_Is_In_Array.html"
-comment "http://stackoverflow.com/questions/14366390/bash-if-condition-check-if-element-is-present-in-array"
-comment "http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value"
 
 # -----------------------------------------------------------------------------
 new_section
 
 comment "Associative arrays."
+comment "http://www.linuxjournal.com/content/bash-associative-arrays"
 
 declare -A long_option
 long_option[a]=allexport
@@ -501,7 +533,6 @@ echo_eval 'echo ${long_option["a"]}'
 # and it will just be this:
 # echo allexport
 
-comment "http://www.linuxjournal.com/content/bash-associative-arrays"
 
 # -----------------------------------------------------------------------------
 new_section
@@ -570,6 +601,7 @@ new_section
 
 comment "Make accessing unset variables produce an 'unbound variable' error and exit the script."
 comment 'Also works for parameters other than the special parameters "@" and "*"'
+comment 'https://unix.stackexchange.com/questions/56837/how-to-test-if-a-variable-is-defined-at-all-in-bash-prior-to-version-4-2-with-th'
 
 echo_eval 'set -u'
 comment 'or'
@@ -599,15 +631,15 @@ test_nounset() {
     declare -p MYVAR
     echo "$MYVAR"
     unset MYVAR
-    declare -p MYVAR
     echo "$MYVAR"
     set +o nounset
-    declare -p MYVAR
     echo "$MYVAR"
 }
 declare -f test_nounset
+# We need to prevent out.sh from running this and crashing the script,
+# so we comment it out preemptively.
+printf '#'
 inspect_run test_nounset
-test_nounset
 
 comment 'Check if nounset is enabled.'
 
@@ -639,7 +671,6 @@ test_nounset() {
 declare -f test_nounset
 inspect_run test_nounset
 
-comment 'https://unix.stackexchange.com/questions/56837/how-to-test-if-a-variable-is-defined-at-all-in-bash-prior-to-version-4-2-with-th'
 
 # -----------------------------------------------------------------------------
 new_section
@@ -668,37 +699,30 @@ test_errexit() {
 }
 declare -f test_errexit
 inspect_run test_errexit
-echo hi
-
-test_errexit
-echo $?
-
-echo_eval 'set -o errexit; false; set +e'
-set -o errexit
-false
-set +e
 
 # -----------------------------------------------------------------------------
 new_section
 
-# Get error code of first command to fail in a pipeline,
-# instead of the last one.
-echo '	example_error | no_error'
-example_error | no_error
-echo '$? = '$?
-set -o pipefail
-echo '	example_error | no_error'
-example_error | no_error
-echo '$? = '$?
-# Undo.
-set +o pipefail
+comment 'Get error code of first command to fail in a pipeline,'
+comment 'instead of the last one.'
+pipefail_example() {
+    false | true; echo $?
+    set -o pipefail
+    false | true; echo $?
+    set +o pipefail
+    false | true; echo $?
+}
+declare -f pipefail_example
+inspect_run pipefail_example
 
-# All at the same time.
-set -euo pipefail
-# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+# -----------------------------------------------------------------------------
+new_section
 
-# Undo all at the same time.
-set +euo pipefail
+comment "Enable multiple options at once."
+comment 'http://redsymbol.net/articles/unofficial-bash-strict-mode/'
+echo_eval 'set -euo pipefail'
+comment "Disable multiple options at once."
+echo_eval 'set +euo pipefail'
 
 # -----------------------------------------------------------------------------
 new_section
@@ -708,14 +732,13 @@ comment 'Read-only (immutable or constant) variables.'
 readonly_var() {
     readonly local path="/tmp/"
     path="/usr/"
-    unset path
 }
 declare -f readonly_var
 
 inspect_run readonly_var
 
-echo "Unfortunately, this can be inconvenient for shell functions,"
-echo "because readonly variables can only be assigned once even if the function is called many times."
+comment "Unfortunately, this can be inconvenient for shell functions,"
+comment "because readonly variables can only be assigned once even if the function is called many times."
 
 onetime_func() {
     readonly local arg1="$1"
@@ -726,44 +749,55 @@ declare -f onetime_func
 inspect_run onetime_func "first time"
 inspect_run onetime_func "second time"
 
-echo '-------------------------------------------------------------------------------'
-echo 'Before using cd(1) on a relative path,'
-echo 'make sure to unset $CDPATH in case another script set it.'
-CDPATH="/tmp/"
-declare -p CDPATH
-cd example/
-unset CDPATH
-cd example/
-pwd
-cd -
-# https://bosker.wordpress.com/2012/02/12/bash-scripters-beware-of-the-cdpath/
+# -----------------------------------------------------------------------------
+new_section
 
-echo '-------------------------------------------------------------------------------'
-echo 'Splitting piplines with comments on each line.'
-cat ./example.txt | # Output the file.
-sort -n |           # Sort it numerically.
-uniq |              # Remove repeats.
-head -n 1           # Get the line beginning with the first (smallest) number.
+comment 'Before using `cd` on a relative path,'
+comment 'make sure to `unset CDPATH` in case another script set it,'
+comment "or you may get a puzzling 'No such file or directory' error."
+comment 'https://bosker.wordpress.com/2012/02/12/bash-scripters-beware-of-the-cdpath/'
 
-echo '-------------------------------------------------------------------------------'
-echo "Find directory script was called from, even if it's called from a symlink."
-DIR="$(dirname "$0")"
-declare -p DIR
-# more robust for e.g. calling from a symlink:
-FULL_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-declare -p FULL_PATH
-# https://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+cdpath_example() {
+    mkdir -p ./example/
+    CDPATH="/tmp/"
+    declare -p CDPATH
+    cd example/
+    unset CDPATH
+    cd example/
+}
+declare -f cdpath_example
+inspect_run cdpath_example
 
-echo '-------------------------------------------------------------------------------'
-echo "Brace expansion examples."
-echo -n '{aa,bb,cc,dd} = '
-echo {aa,bb,cc,dd} # aa bb cc dd
-echo -n '{0..12} ='
-echo {0..12}       # 0 1 2 3 4 5 6 7 8 9 10 11 12
-echo -n '{3..-2} ='
-echo {3..-2}       # 3 2 1 0 -1 -2
-echo -n '{a..g} ='
-echo {a..g}        # a b c d e f g
-echo -n '{g..a} ='
-echo {g..a}        # g f e d c b a
-# http://www.linuxjournal.com/content/bash-brace-expansion
+# -----------------------------------------------------------------------------
+new_section
+comment 'Splitting piplines with comments on each line.'
+
+set -v
+comment_pipeline() {
+    cat ./example.txt | # Output the file.
+    sort -n |           # Sort it numerically.
+    uniq |              # Remove repeats.
+    head -n 1           # Get the line beginning with the first (smallest) number.
+}
+set +v
+
+inspect_run comment_pipeline
+
+# -----------------------------------------------------------------------------
+new_section
+comment "Find directory script was called from, even if it's called from a symlink."
+comment 'https://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in'
+echo_eval 'DIR="$(dirname "$0")"; declare -p DIR'
+comment 'A more robust method for e.g. calling from a symlink:'
+echo_eval 'FULL_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd );'
+
+# -----------------------------------------------------------------------------
+new_section
+comment "Brace expansion examples."
+comment 'http://www.linuxjournal.com/content/bash-brace-expansion'
+echo_eval 'echo {aa,bb,cc,dd}'
+echo_eval 'echo {0..12}'
+echo_eval 'echo {3..-2}'
+echo_eval 'echo {3..-2}'
+echo_eval 'echo {a..g}'
+echo_eval 'echo {g..a}'
