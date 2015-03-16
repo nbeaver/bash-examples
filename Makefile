@@ -1,8 +1,8 @@
 .PHONY : all
-all:
+all : out.sh out-out.log
+out.sh : bash-script.sh Makefile example.txt filename\ with\ spaces.txt
 	if test -f out.sh; then chmod +w out.sh; fi
-	./bash-script.sh > out.sh 2>&1
+	bash bash-script.sh > out.sh 2>&1
 	chmod -w out.sh
-.PHONY : run
-run:
-	bash -o errexit out.sh
+out-out.log: out.sh Makefile example.txt filename\ with\ spaces.txt
+	bash out.sh > out-out.log 2>&1
