@@ -18,7 +18,44 @@ new_section() {
 }
 inspect_run() {
     echo "$*"
+    $* |& sed 's/^/# /'
+}
+
+single_quote()
+{
+    local quoted=${1//\'/\'\\\'\'}
+    printf "'%s'" "$quoted"
+}
+
+echo_eval() {
+    echo "$@"
+    echo "$*"
+    echo $(single_quote "$*")
+    echo $(single_quote "$@")
+    eval "$*" |& sed 's/^/# /'
+}
+
+# Decided this wasn't worth it.
+inspect_run_with_args() {
+    printf "$1"
+    quote_args "${*:2}"
+    printf "\n"
     "$@" |& sed 's/^/# /'
+}
+
+quote_args() {
+    if test -z "$*"
+    then
+        return
+    else
+        #echo "$*"
+        #echo "$@"
+        for arg in "$@"
+        do
+            printf " "
+            quote_custom "$arg"
+        done
+    fi
 }
 
 
@@ -51,7 +88,7 @@ comment "Checking a variable's name and value using the \`declare\` shell builti
 echo 'MYVAR=1'
 MYVAR=1
 # TODO: why does
-# inspect_run export "MYVAR=1"
+# echo_eval export "MYVAR=1"
 # throw "MYVAR: not found"?
 inspect_run declare -p MYVAR
 
@@ -90,7 +127,7 @@ declare -f empty
 inspect_run empty
 
 echo ''
-comment 'This essentially means:'
+comment 'This essentially means that:'
 comment 'test -z == ! test -n'
 comment "http://timmurphy.org/2010/05/19/checking-for-empty-string-in-bash/"
 
@@ -195,6 +232,22 @@ inspect_run store_file_into_variable
 # -----------------------------------------------------------------------------
 new_section
 
+comment 'The characters that need to be escaped when using double quotes.'
+echo_eval 'echo "$SHELL `echo hi` !!"'
+
+echo_eval 'echo "\$ \` \" \\ \!"'
+
+comment 'The `!` is for history expansions, and failing to escape it will lead to errors such as:'
+comment 'bash: !: event not found'
+comment 'This only happens if the `histexpand` option is set.'
+comment ''
+# TODO: find a better place to put this.
+comment '"A single quote may not occur between single quotes, even when preceded by a backslash."'
+comment 'https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html#Single-Quotes'
+
+# -----------------------------------------------------------------------------
+new_section
+
 comment 'Quoting and eval.'
 
 using_eval() {
@@ -265,16 +318,9 @@ show_arguments() {
     done
 }
 declare -f show_arguments
-# Alternative methods to achive this:
-# printf -- "show_arguments '-e' '*' '~' '\$HOME' '\\\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' \n"
-# echo show_arguments\ \'-e\'\ \'\*\'\ \'\~\'\ \'\$HOME\'\ \'\\\'\ \'\`pwd\`\'\ \'\$\(pwd\)\'\ \ \'\ \ \ \.\ \.\.\ \.\.\.\ \.\.\.\.\.\ \ \ \ \'\ 
-# "A single quote may not occur between single quotes, even when preceded by a backslash."
-# https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html#Single-Quotes
 
-comment "This is how it looks in the script before the shell does quote removal and expansion and such:"
-echo "show_arguments '-e \n' '{a..z}' '*' '~' '\$HOME' '\\' '\`pwd\`' '\$(pwd)'  '   . .. ... .....    ' "
-comment "Now let's run the command with those arguments:"
-inspect_run show_arguments '-e \n' '{a..z}' '$((2+2))' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    ' 
+echo_eval $'show_arguments \'-e \\n\' \'{a..z}\' \'!\' \'$((2+2))\' \'*\' \'~\' \'\$HOME\' \'\\\' \'\`pwd\`\' \'\$(pwd)\'  \'   . .. ... .....    \''
+
 comment "http://stackoverflow.com/questions/12314451/accessing-bash-command-line-args-vs"
 comment "http://www.gnu.org/software/bash/manual/bashref.html#Special-Parameters"
 comment "http://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-bash-script"
@@ -337,7 +383,7 @@ check_exit_code() {
 }
 declare -f check_exit_code
 
-inspect_run check_exit_code example_error "unnecessary" "arguments"
+inspect_run_with_args check_exit_code example_error "unnecessary" "arguments"
 
 # -----------------------------------------------------------------------------
 new_section
@@ -421,10 +467,11 @@ MY_ARRAY=("first" "second" "third")
 
 declare -p MY_ARRAY
 
-inspect_run in_array "second" MY_ARRAY
+echo_eval 'in_array "second" MY_ARRAY'
 
-inspect_run in_array "fourth" MY_ARRAY
+echo_eval 'in_array "fourth" MY_ARRAY'
 
+echo ""
 comment "https://raymii.org/s/snippets/Bash_Bits_Check_If_Item_Is_In_Array.html"
 comment "http://stackoverflow.com/questions/14366390/bash-if-condition-check-if-element-is-present-in-array"
 comment "http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value"
@@ -440,8 +487,7 @@ long_option[B]=braceexpand
 
 declare -p long_option
 
-echo 'echo ${long_option["a"]}'
-eval 'echo ${long_option["a"]}'
+echo_eval 'echo ${long_option["a"]}'
 # We can't use inspect_run here,
 # because the shell will expand it too soon,
 # and it will just be this:
@@ -505,8 +551,6 @@ new_section
 
 comment "Turn on verbose mode, so each line (including comments) is echoed, then run."
 set -v
-# Turn on verbose mode.
-set -v
 # This is a comment.
 echo "# Hello."
 # Turn off verbose mode.
@@ -516,32 +560,118 @@ set +v
 # -----------------------------------------------------------------------------
 new_section
 
-comment 'Make unset variables (and parameters other than the special parameters "@" and "*")'
-comment "produce an 'unbound variable' error."
+comment "Make accessing unset variables produce an 'unbound variable' error and exit the script."
+comment 'Also works for parameters other than the special parameters "@" and "*"'
 
-set -u
-check_option nounset
-check_option u
-set -o nounset # equivalent longer version
-# Go back to the default of ignoring unset variables.
-set +u
-set +o nounset
+echo_eval 'set -u'
+comment 'or'
+echo_eval 'set -o nounset'
+comment 'read as `no unset`, not `noun set`.'
 
-echo "\$UNBOUND_VARIABLE = $UNBOUND_VARIABLE"
-declare -p UNBOUND_VARIABLE
+enable_nounset() {
+    echo "$-"
+    echo "$SHELLOPTS"
+    set -u
+    echo "$-"
+    echo "$SHELLOPTS"
+    set +o nounset
+    echo "$-"
+    echo "$SHELLOPTS"
+}
+declare -f enable_nounset
+inspect_run enable_nounset
 
-# Terminate immediately as soon as anything returns a non-zero status.
-# set -e
+# TODO: why doesn't this function fail?
+test_nounset() {
+    local MYVAR="test"
+    set -o nounset
+    declare -p MYVAR
+    echo "$MYVAR"
+    MYVAR=""
+    declare -p MYVAR
+    echo "$MYVAR"
+    unset MYVAR
+    declare -p MYVAR
+    echo "$MYVAR"
+    set +o nounset
+    declare -p MYVAR
+    echo "$MYVAR"
+}
+declare -f test_nounset
+inspect_run test_nounset
+test_nounset
+
+comment 'Check if nounset is enabled.'
+
+check_nounset() {
+    if [[ $- =~ u ]]
+    then
+        echo 'nounset option is set.'
+        return 0
+    else
+        echo 'nounset option is not set.'
+        return 1
+    fi
+}
+declare -f check_nounset
+inspect_run check_nounset
+
+comment 'Testing a variable without crashing the script when `nounset` is enabled.'
+
+test_nounset() {
+    local var1='blah'
+    unset var1
+    if test -v var1
+    then
+        echo "var1 is set."
+    else
+        echo "var1 is unset."
+    fi
+}
+declare -f test_nounset
+inspect_run test_nounset
+
+comment 'https://unix.stackexchange.com/questions/56837/how-to-test-if-a-variable-is-defined-at-all-in-bash-prior-to-version-4-2-with-th'
+
+# -----------------------------------------------------------------------------
+new_section
+
+comment 'Terminate immediately as soon as anything returns a non-zero status.'
+enable_errexit() {
+    echo "$-"
+    echo "$SHELLOPTS"
+    set -e
+    echo "$-"
+    echo "$SHELLOPTS"
+    set +o errexit
+    echo "$-"
+    echo "$SHELLOPTS"
+}
+declare -f enable_errexit
+inspect_run enable_errexit
+
+# TODO: why doesn't this throw an error?
+test_errexit() {
+    echo "blah1"
+    set -o errexit
+    false
+    set +e
+    echo "blah2"
+}
+declare -f test_errexit
+inspect_run test_errexit
+echo hi
+
+test_errexit
+echo $?
+
+echo_eval 'set -o errexit; false; set +e'
 set -o errexit
-if [[ $- =~ e ]]
-then
-    echo 'errexit option is set.'
-else
-    echo 'errexit option is not set.'
-fi
-# Undo that.
+false
 set +e
-set +o errexit
+
+# -----------------------------------------------------------------------------
+new_section
 
 # Get error code of first command to fail in a pipeline,
 # instead of the last one.
@@ -562,20 +692,31 @@ set -euo pipefail
 # Undo all at the same time.
 set +euo pipefail
 
-echo '-------------------------------------------------------------------------------'
-echo 'Read-only (immutable or constant) variables.'
+# -----------------------------------------------------------------------------
+new_section
 
-function onetime_function {
-    readonly local readonly_local_path="/tmp/"
-    echo "$readonly_local_path"
+comment 'Read-only (immutable or constant) variables.'
+
+readonly_var() {
+    readonly local path="/tmp/"
+    path="/usr/"
+    unset path
 }
-declare -f onetime_function
+declare -f readonly_var
 
-echo "Unfortunately, these are inconvenient for shell functions,"
-echo "because readonly variables can only be assigned once,"
-echo "so this function can only be run once."
-onetime_function
-onetime_function
+inspect_run readonly_var
+
+echo "Unfortunately, this can be inconvenient for shell functions,"
+echo "because readonly variables can only be assigned once even if the function is called many times."
+
+onetime_func() {
+    readonly local arg1="$1"
+    echo "$arg1"
+}
+declare -f onetime_func
+
+inspect_run onetime_func "first time"
+inspect_run onetime_func "second time"
 
 echo '-------------------------------------------------------------------------------'
 echo 'Before using cd(1) on a relative path,'
