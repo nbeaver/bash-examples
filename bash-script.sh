@@ -10,7 +10,7 @@
 
 comment() {
     printf -- "\t# "
-    printf -- "$*\n"
+    printf -- "%s\n" "$*"
 }
 new_section() {
     printf -- '\n'
@@ -23,8 +23,7 @@ inspect_run() {
     return $?
 }
 
-single_quote()
-{
+single_quote() {
     local quoted=${1//\'/\'\\\'\'}
     printf "'%s'" "$quoted"
 }
@@ -110,6 +109,26 @@ file_exists() {
 }
 declare -f file_exists
 echo_eval $'file_exists \'filename with spaces.txt\''
+
+# -----------------------------------------------------------------------------
+new_section
+comment 'Testing for string equality.'
+comment 'http://stackoverflow.com/questions/2600281/what-is-the-difference-between-operator-and-in-bash'
+
+string_equals_foo() {
+    if test "$*" = 'foo'
+    then
+        echo "$* = foo"
+        return 0
+    else
+        echo "$* != foo"
+        return 1
+    fi
+}
+declare -f string_equals_foo
+echo_eval "string_equals_foo 'foo'"
+echo_eval "string_equals_foo 'bar'"
+echo_eval "string_equals_foo 'foobar'"
 
 # -----------------------------------------------------------------------------
 new_section
@@ -267,7 +286,8 @@ set -o histexpand
 echo "!"
 set +o histexpand
 
-comment 'The `!` is for history expansions, and failing to escape it will lead to errors such as:'
+comment 'The `!` is for history expansions,'
+comment 'and failing to escape it will lead to errors such as:'
 echo '# bash: !: event not found'
 comment 'but only if the shell is interactive and `histexpand` option is set.'
 comment ''
@@ -277,6 +297,17 @@ comment 'One way around this is to use quote concatenation.'
 echo_eval $'echo "\'"\'$SHELL\'"\'"'
 comment 'Another way is to use ANSI-C single quotes and backslashes.'
 
+# -----------------------------------------------------------------------------
+new_section
+comment 'Quoting URLs can be difficult,'
+comment 'because while double quotes are not allowed in URLs,'
+comment 'single quotes and dollar signs are allowed in some URI schemes.'
+comment 'https://stackoverflow.com/questions/18251399/why-doesnt-encodeuricomponent-encode-sinlge-quotes-apostrophes'
+comment 'https://bugzilla.mozilla.org/show_bug.cgi?id=434211'
+comment 'https://bugzilla.mozilla.org/show_bug.cgi?id=407172'
+comment 'http://www.brandonporter.com/mozilla_bug/test%272.html'
+comment "http://www.brandonporter.com/mozilla_bug/test'2.html"
+comment "http://perishablepress.com/stop-using-unsafe-characters-in-urls/"
 
 # -----------------------------------------------------------------------------
 new_section
@@ -590,6 +621,7 @@ new_section
 
 comment "Turn on verbose mode, so each line (including comments) is echoed, then run."
 set -v
+set -v
 # This is a comment.
 echo "# Hello."
 # Turn off verbose mode.
@@ -609,12 +641,15 @@ echo_eval 'set -o nounset'
 comment 'read as `no unset`, not `noun set`.'
 
 enable_nounset() {
+    echo "nounset disabled"
     echo "$-"
     echo "$SHELLOPTS"
     set -u
+    echo "nounset enabled"
     echo "$-"
     echo "$SHELLOPTS"
     set +o nounset
+    echo "nounset disabled again"
     echo "$-"
     echo "$SHELLOPTS"
 }
@@ -622,7 +657,7 @@ declare -f enable_nounset
 inspect_run enable_nounset
 
 # TODO: why doesn't this function fail?
-test_nounset() {
+nounset_error() {
     local MYVAR="test"
     set -o nounset
     declare -p MYVAR
@@ -635,11 +670,12 @@ test_nounset() {
     set +o nounset
     echo "$MYVAR"
 }
-declare -f test_nounset
+declare -f nounset_error
 # We need to prevent out.sh from running this and crashing the script,
 # so we comment it out preemptively.
+comment $'We won\'t actually run `test_nounset` since it would crash the script.'
 printf '#'
-inspect_run test_nounset
+inspect_run nounset_error
 
 comment 'Check if nounset is enabled.'
 
@@ -657,8 +693,11 @@ declare -f check_nounset
 inspect_run check_nounset
 
 comment 'Testing a variable without crashing the script when `nounset` is enabled.'
+comment 'This method requires bash version 4.2 or later.'
+comment 'https://stackoverflow.com/questions/25032910/how-to-check-if-a-environment-variable-is-set-with-set-o-nounset'
+comment 'https://unix.stackexchange.com/questions/56837/how-to-test-if-a-variable-is-defined-at-all-in-bash-prior-to-version-4-2-with-th'
 
-test_nounset() {
+test_unset_var() {
     local var1='blah'
     unset var1
     if test -v var1
@@ -668,8 +707,8 @@ test_nounset() {
         echo "var1 is unset."
     fi
 }
-declare -f test_nounset
-inspect_run test_nounset
+declare -f test_unset_var
+inspect_run test_unset_var
 
 
 # -----------------------------------------------------------------------------
@@ -689,13 +728,16 @@ enable_errexit() {
 declare -f enable_errexit
 inspect_run enable_errexit
 
-# TODO: why doesn't this throw an error?
+# TODO: why doesn't this exit the script?
 test_errexit() {
-    echo "blah1"
+    set +o errexit
+    echo "errexit disabled"
+    false
     set -o errexit
+    echo "errexit enabled"
     false
     set +e
-    echo "blah2"
+    echo "errexit disabled again"
 }
 declare -f test_errexit
 inspect_run test_errexit
@@ -787,6 +829,9 @@ inspect_run comment_pipeline
 new_section
 comment "Find directory script was called from, even if it's called from a symlink."
 comment 'https://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in'
+comment ''
+comment 'Note that there are often better solutions.'
+comment 'http://mywiki.wooledge.org/BashFAQ/028'
 echo_eval 'DIR="$(dirname "$0")"; declare -p DIR'
 comment 'A more robust method for e.g. calling from a symlink:'
 echo_eval 'FULL_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd );'
