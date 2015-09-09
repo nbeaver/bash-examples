@@ -435,6 +435,12 @@ done
 echo 'caller_3'
 caller_3 |& sed 's/^/# /'
 
+# alternately, just do this:
+funcname_example() {
+    echo "${FUNCNAME}(): this is an exampe useage of FUNCNAME."
+}
+# http://bash.cyberciti.biz/guide/Pass_arguments_into_a_function#FUNCNAME_in_action
+
 comment "http://stackoverflow.com/questions/9146623/in-bash-is-it-possible-to-get-the-function-name-in-function-body"
 comment "http://www.tldp.org/LDP/abs/html/arrays.html"
 
