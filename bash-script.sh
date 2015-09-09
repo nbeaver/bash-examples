@@ -551,6 +551,37 @@ echo_eval 'in_array "second" MY_ARRAY'
 
 echo_eval 'in_array "fourth" MY_ARRAY'
 
+# Another way to do it.
+
+in_dirstack() {
+    local path="$*"
+    if test -z "$path"; then
+        err 'empty string.'
+        return 1
+    elif ! test -e "$path";  then
+        err "path does not exist: $path"
+        return 1
+    elif ! test -d "$path"; then
+        err "path is not a directory: $path"
+        return 1
+    fi
+    local resolved="$(realpath -e -- "$path")"
+    # Run through DIRSTACK looking for matched.
+    # We have to use dirs -l
+    # instead of DIRSTACK
+    # due to lack of tilde expansion.
+    local dir
+    while read dir
+    do
+        local realdir="$(realpath -e -- "$dir")"
+        if [ "$resolved" = "$realdir" ]
+        then
+            return 0
+        fi
+    done < <(dirs -l -p)
+    return 1
+}
+
 
 # -----------------------------------------------------------------------------
 new_section
