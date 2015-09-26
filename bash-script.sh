@@ -220,6 +220,32 @@ declare -f strip_extensions
 inspect_run strip_extensions
 
 # http://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
+
+# -----------------------------------------------------------------------------
+new_section
+comment 'Simple text filter that reads stdin line by line.'
+comment 'In this case, it checks if the line is a path to an executable.'
+filter_executables() {
+    while read line
+    do
+        if test -d "$line"
+        then
+            # Ignore directories.
+            continue
+        elif test -x "$line"
+        then
+            printf -- "$line\n"
+        fi
+    done
+}
+declare -f filter_executables
+test_filter_executables() {
+    printf '/bin/\n/bin/ls\n/bin/blah' | filter_executables
+}
+declare -f  test_filter_executables
+inspect_run test_filter_executables
+#
+
 # -----------------------------------------------------------------------------
 new_section
 comment 'Run through each line of a text file.'
