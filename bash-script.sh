@@ -765,14 +765,13 @@ enable_errexit() {
 declare -f enable_errexit
 inspect_run enable_errexit
 
-# TODO: why doesn't this exit the script?
 test_errexit() {
     set +o errexit
     echo "errexit disabled"
     false
     set -o errexit
     echo "errexit enabled"
-    false
+    true # if this were 'false', it would end the script prematurely.
     set +e
     echo "errexit disabled again"
 }
