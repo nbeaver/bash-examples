@@ -207,7 +207,7 @@ comment 'http://unix.stackexchange.com/a/99186'
 
 # -----------------------------------------------------------------------------
 new_section
-# Strip the file extension for e.g. generating the name of an output file.
+# comment 'Strip the file extension for e.g. generating the name of an output file.'
 strip_extensions() {
     for myfile in *.txt
     do
