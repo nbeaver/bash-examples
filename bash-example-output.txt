@@ -1,0 +1,203 @@
+Number of args: 3
+declare -- MYVAR="1"
+Testing if file `filename with spaces.txt` exists...
+`filename with spaces.txt` exists.
+foo = foo
+bar != foo
+foobar != foo
+VAR is empty.
+VAR is not empty.
+No arguments.
+Succesfully pinged localhost.
+Filename with extension: `bash-example-output.txt`
+Filename without extension: `bash-example-output`
+Filename with extension: `example.txt`
+Filename without extension: `example`
+Filename with extension: `filename with spaces.txt`
+Filename without extension: `filename with spaces`
+/bin/ls
+1st line.
+2nd line.
+3rd line.
+Contents of "example.txt":
+1st line.
+2nd line.
+3rd line.
+Contents of $TEXTFILE_CONTENTS:
+1st line.
+2nd line.
+3rd line.
+$SHELL `echo hi` \ *
+$SHELL `echo hi`
+      
+  	  \ '   ¡ ¾ Å 𐀀 	 
+\a \b \e \E \f \n \r \t \v \\ \' \033 \x1B \uA1 \uBE \u212B \U212B \cI 
+$ ` " \ \!
+/bin/bash hi
+'/bin/bash'
+'$SHELL'
+declare -- temp="echo \$SHELL"
+echo $SHELL
+echo $SHELL
+$temp
+/bin/bash
+/bin/bash
+$SHELL
+declare -- temp="SHELL"
+SHELL
+SHELL
+/bin/bash
+$*= -e \n bash-example-output.txt bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile
+
+\n
+bash-example-output.txt
+bash-examples.sh
+example
+example-generator.sh
+example.txt
+filename with spaces.txt
+Makefile
+$@= -e \n bash-example-output.txt bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile
+
+\n
+bash-example-output.txt
+bash-examples.sh
+example
+example-generator.sh
+example.txt
+filename with spaces.txt
+Makefile
+"$*"=  -e  \n     *  
+  -e  \n     *  
+"$@"=  -e  \n     *  
+  -e  \n  
+  *  
+Number of arguments $# = `11`
+All arguments $*   = `-e \n {a..z} !! $((2+2)) bash-example-output.txt bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
+All arguments $@   = `-e \n {a..z} !! $((2+2)) bash-example-output.txt bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
+All arguments "$*" = `-e \n {a..z} !! $((2+2)) * ~ $HOME \ `pwd` $(pwd)    . .. ... .....    `
+All arguments "$@" = `-e \n {a..z} !! $((2+2)) * ~ $HOME \ `pwd` $(pwd)    . .. ... .....    `
+Script name $0 = `bash-examples.sh`
+Arguments 1 to 11:
+`-e \n`
+`{a..z}`
+`!!`
+`$((2+2))`
+`*`
+`~`
+`$HOME`
+`\`
+``pwd``
+`$(pwd)`
+`   . .. ... .....    `
+Number of arguments $# = `11`
+All arguments $*   = `-e \n {a..z} !! $((2+2)) bash-example-output.txt bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
+All arguments $@   = `-e \n {a..z} !! $((2+2)) bash-example-output.txt bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
+All arguments "$*" = `-e \n {a..z} !! $((2+2)) * ~ $HOME \ `pwd` $(pwd)    . .. ... .....    `
+All arguments "$@" = `-e \n {a..z} !! $((2+2)) * ~ $HOME \ `pwd` $(pwd)    . .. ... .....    `
+Script name $0 = `bash-examples.sh`
+Arguments 1 to 11:
+`-e \n`
+`{a..z}`
+`!!`
+`$((2+2))`
+`*`
+`~`
+`$HOME`
+`\`
+``pwd``
+`$(pwd)`
+`   . .. ... .....    `
+From function `this_function` in `bash-examples.sh` on line 448:
+called by `caller_1`
+called by `caller_2`
+called by `caller_3`
+called by `main`
+From check_exit_code: Running this:
+example_error unnecessary arguments
+From example_error: Returning error code 1.
+From check_exit_code: The command `example_error unnecessary arguments' failed with return code 1.
+print_pipe_errors: Running this:
+true
+declare -a RETURN_CODE_ARRAY='([0]="0")'
+0 return code: 0
+Extracted all return values.
+
+print_pipe_errors: Running this:
+false | error_42
+error_42: returning 42
+declare -a RETURN_CODE_ARRAY='([0]="1" [1]="42")'
+0 return code: 1
+1 return code: 42
+Extracted all return values.
+
+print_pipe_errors: Running this:
+true | true | false
+declare -a RETURN_CODE_ARRAY='([0]="0" [1]="0" [2]="1")'
+0 return code: 0
+1 return code: 0
+2 return code: 1
+Extracted all return values.
+
+print_pipe_errors: Running this:
+true | false | error_42
+error_42: returning 42
+declare -a RETURN_CODE_ARRAY='([0]="0" [1]="1" [2]="42")'
+0 return code: 0
+1 return code: 1
+2 return code: 42
+Extracted all return values.
+
+print_pipe_errors: Running this:
+echo "Hello, world." | tr . !
+Hello, world!
+declare -a RETURN_CODE_ARRAY='([0]="0" [1]="0")'
+0 return code: 0
+1 return code: 0
+Extracted all return values.
+
+`second` in MY_ARRAY[@]
+`fourth` not in MY_ARRAY[@]
+allexport
+# This is a comment.
+echo "# Hello."
+# Hello.
+# Hello.
+# Turn off verbose mode.
+set +v
+nounset disabled
+huB
+braceexpand:hashall:interactive-comments:nounset
+nounset enabled
+huB
+braceexpand:hashall:interactive-comments:nounset
+nounset disabled again
+hB
+braceexpand:hashall:interactive-comments
+nounset option is not set.
+var1 is unset.
+hB
+braceexpand:hashall:interactive-comments
+ehB
+braceexpand:errexit:hashall:interactive-comments
+hB
+braceexpand:hashall:interactive-comments
+errexit disabled
+errexit enabled
+errexit disabled again
+0
+1
+0
+bash-examples.sh: line 778: path: readonly variable
+bash-examples.sh: line 789: onetime_func first time: command not found
+bash-examples.sh: line 791: onetime_func second time: command not found
+declare -- CDPATH="/tmp/"
+bash-examples.sh: line 807: cd: example/: No such file or directory
+cat: ./example.txt: No such file or directory
+declare -- DIR="."
+aa bb cc dd
+0 1 2 3 4 5 6 7 8 9 10 11 12
+3 2 1 0 -1 -2
+3 2 1 0 -1 -2
+a b c d e f g
+g f e d c b a
