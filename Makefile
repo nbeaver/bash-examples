@@ -1,8 +1,12 @@
 .PHONY : all
-all : out.sh out-out.log
-out.sh : bash-script.sh Makefile example.txt filename\ with\ spaces.txt
-	if test -f out.sh; then chmod +w out.sh; fi
-	bash bash-script.sh > out.sh 2>&1
-	chmod -w out.sh
-out-out.log: out.sh Makefile example.txt filename\ with\ spaces.txt
-	bash out.sh > out-out.log 2>&1
+all : bash-examples.sh bash-example-output.txt
+
+bash-examples.sh : example-generator.sh Makefile example.txt filename\ with\ spaces.txt
+	bash example-generator.sh > bash-examples.sh 2>&1
+
+bash-example-output.txt: bash-examples.sh Makefile example.txt filename\ with\ spaces.txt
+	bash bash-examples.sh > bash-example-output.txt 2>&1
+
+clean:
+	rm -f bash-examples.sh
+	rm -f bash-example-output.txt
