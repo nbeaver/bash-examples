@@ -2,11 +2,15 @@
 Bash examples with output.
 ==========================
 
-.. See `<bash-examples.sh>`_.
+----------
+Quickstart
+----------
 
------------
-Motivation.
------------
+See `<bash-examples.sh>`_.
+
+----------
+Motivation
+----------
 
 When showing examples of bash scripts,
 there tend to be two different styles:
@@ -48,15 +52,17 @@ See `<examples-generator.sh>`_ for how this is accomplished.
 Questions.
 ----------
 
-Q. Wouldn't the IPython ``bash`` kernel accomplish the same thing?
+Q. Wouldn't the `IPython bash kernel`_ accomplish the same thing?
 
-A. Maybe, I haven't tried it. I wanted to keep this a simple text file.
+A. Probably, but it would also store everything as JSON, which requires escaping double quotes and newlines.
+   I wanted to keep this a simple text file that could be used as raw material in larger bash scripts.
 
 Q. Wouldn't `xiki`_ do a better job of this?
 
 A. Possibly, but this doesn't require specialized software, just ``bash``.
 
 .. _xiki: http://xiki.org/
+.. _IPython bash kernel: http://jeroenjanssens.com/2015/02/19/ibash-notebook.html
 
 .. [#prompt_style]
    Examples of the prompt style:
