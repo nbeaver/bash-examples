@@ -147,6 +147,8 @@ strip_extensions ()
     done
 }
 strip_extensions
+# Filename with extension: `bash-example-output.txt`
+# Filename without extension: `bash-example-output`
 # Filename with extension: `example.txt`
 # Filename without extension: `example`
 # Filename with extension: `filename with spaces.txt`
@@ -330,15 +332,17 @@ split1 ()
     done
 }
 split1 '  -e  \n  ' '  *  '
-# $*= -e \n bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile
+# $*= -e \n bash-example-output.txt bash-examples.sh example examples-generator.sh example.txt filename with spaces.txt Makefile readme.rst
 # 
 # \n
+# bash-example-output.txt
 # bash-examples.sh
 # example
-# example-generator.sh
+# examples-generator.sh
 # example.txt
 # filename with spaces.txt
 # Makefile
+# readme.rst
 split2 () 
 { 
     echo '$@='$@;
@@ -348,15 +352,17 @@ split2 ()
     done
 }
 split2 '  -e  \n  ' '  *  '
-# $@= -e \n bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile
+# $@= -e \n bash-example-output.txt bash-examples.sh example examples-generator.sh example.txt filename with spaces.txt Makefile readme.rst
 # 
 # \n
+# bash-example-output.txt
 # bash-examples.sh
 # example
-# example-generator.sh
+# examples-generator.sh
 # example.txt
 # filename with spaces.txt
 # Makefile
+# readme.rst
 split3 () 
 { 
     echo '"$*"='"$*";
@@ -401,11 +407,11 @@ show_arguments ()
 }
 show_arguments '-e \n' '{a..z}' '!!' '$((2+2))' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)'  '   . .. ... .....    '
 # Number of arguments $# = `11`
-# All arguments $*   = `-e \n {a..z} !! $((2+2)) bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
-# All arguments $@   = `-e \n {a..z} !! $((2+2)) bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
+# All arguments $*   = `-e \n {a..z} !! $((2+2)) bash-example-output.txt bash-examples.sh example examples-generator.sh example.txt filename with spaces.txt Makefile readme.rst ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
+# All arguments $@   = `-e \n {a..z} !! $((2+2)) bash-example-output.txt bash-examples.sh example examples-generator.sh example.txt filename with spaces.txt Makefile readme.rst ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
 # All arguments "$*" = `-e \n {a..z} !! $((2+2)) * ~ $HOME \ `pwd` $(pwd)    . .. ... .....    `
 # All arguments "$@" = `-e \n {a..z} !! $((2+2)) * ~ $HOME \ `pwd` $(pwd)    . .. ... .....    `
-# Script name $0 = `example-generator.sh`
+# Script name $0 = `examples-generator.sh`
 # Arguments 1 to 11:
 # `-e \n`
 # `{a..z}`
@@ -420,11 +426,11 @@ show_arguments '-e \n' '{a..z}' '!!' '$((2+2))' '*' '~' '$HOME' '\' '`pwd`' '$(p
 # `   . .. ... .....    `
 show_arguments  '-e \n' '{a..z}' '!!' '$((2+2))' '*' '~' '$HOME' '\' '`pwd`' '$(pwd)' '   . .. ... .....    '
 # Number of arguments $# = `11`
-# All arguments $*   = `-e \n {a..z} !! $((2+2)) bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
-# All arguments $@   = `-e \n {a..z} !! $((2+2)) bash-examples.sh example example-generator.sh example.txt filename with spaces.txt Makefile ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
+# All arguments $*   = `-e \n {a..z} !! $((2+2)) bash-example-output.txt bash-examples.sh example examples-generator.sh example.txt filename with spaces.txt Makefile readme.rst ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
+# All arguments $@   = `-e \n {a..z} !! $((2+2)) bash-example-output.txt bash-examples.sh example examples-generator.sh example.txt filename with spaces.txt Makefile readme.rst ~ $HOME \ `pwd` $(pwd) . .. ... ..... `
 # All arguments "$*" = `-e \n {a..z} !! $((2+2)) * ~ $HOME \ `pwd` $(pwd)    . .. ... .....    `
 # All arguments "$@" = `-e \n {a..z} !! $((2+2)) * ~ $HOME \ `pwd` $(pwd)    . .. ... .....    `
-# Script name $0 = `example-generator.sh`
+# Script name $0 = `examples-generator.sh`
 # Arguments 1 to 11:
 # `-e \n`
 # `{a..z}`
@@ -464,7 +470,7 @@ caller_3 ()
     caller_2
 }
 caller_3
-# From function `this_function` in `example-generator.sh` on line 435:
+# From function `this_function` in `examples-generator.sh` on line 435:
 # called by `caller_1`
 # called by `caller_2`
 # called by `caller_3`
@@ -673,7 +679,7 @@ nounset_error ()
 # test
 # declare -- MYVAR=""
 # 
-# example-generator.sh: line 732: MYVAR: unbound variable
+# examples-generator.sh: line 732: MYVAR: unbound variable
 	# Check if nounset is enabled.
 check_nounset () 
 { 
@@ -778,7 +784,7 @@ readonly_var ()
     path="/usr/"
 }
 readonly_var
-# example-generator.sh: line 838: path: readonly variable
+# examples-generator.sh: line 838: path: readonly variable
 	# Unfortunately, this can be inconvenient for shell functions,
 	# because readonly variables can only be assigned once even if the function is called many times.
 onetime_func () 
@@ -808,7 +814,7 @@ cdpath_example ()
 }
 cdpath_example
 # declare -- CDPATH="/tmp/"
-# example-generator.sh: line 870: cd: example/: No such file or directory
+# examples-generator.sh: line 870: cd: example/: No such file or directory
 
 	# ------------------------------------------------------------------------------
 
