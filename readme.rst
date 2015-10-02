@@ -51,20 +51,20 @@ but are indented by a tab.
 
 See `<examples-generator.sh>`_ for how this is accomplished.
 
-----------
-Questions.
-----------
+--------------------
+Questions & answers.
+--------------------
 
-Q. Wouldn't the `IPython bash kernel`_ accomplish the same thing?
+:Q: Wouldn't the `IPython bash kernel`_ accomplish the same thing?
 
-A. Probably, but it would also store everything as JSON,
-   which requires escaping double quotes and newlines.
-   I wanted to keep this a simple text file
-   that could be used as raw material in larger bash scripts.
+:A: Probably, but it would also store everything as JSON,
+    which requires escaping double quotes and newlines.
+    I wanted to keep this a simple text file
+    that could be used as raw material in larger bash scripts.
 
-Q. Wouldn't `xiki`_ do a better job of this?
+:Q: Wouldn't `xiki`_ do a better job of this?
 
-A. Possibly, but this doesn't require specialized software, just ``bash``.
+:A: Possibly, but this doesn't require specialized software, just ``bash``.
 
 .. _xiki: http://xiki.org/
 .. _IPython bash kernel: http://jeroenjanssens.com/2015/02/19/ibash-notebook.html
