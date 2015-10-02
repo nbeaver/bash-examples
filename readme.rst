@@ -14,8 +14,8 @@ Motivation
 
 When showing examples of bash scripts,
 there tend to be two different styles:
-.. the commandline prompt style, [#prompt_style]_
-.. and the inline output style. [#inline_style]_
+the commandline prompt style, [#prompt_style]_
+and the inline output style. [#inline_style]_
 
 The commandline/prompt style like this::
 
