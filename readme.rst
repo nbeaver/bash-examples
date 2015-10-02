@@ -2,9 +2,9 @@
 Bash examples with output.
 ==========================
 
-----------
-Quickstart
-----------
+-------------
+What is this?
+-------------
 
 See `<bash-examples.sh>`_.
 
@@ -46,6 +46,9 @@ show the code using ``declare -f``
 run it with another function and ``"$@"``,
 and finally display the output as commented text.
 
+Comments are shown as well,
+but are indented by a tab.
+
 See `<examples-generator.sh>`_ for how this is accomplished.
 
 ----------
@@ -54,8 +57,10 @@ Questions.
 
 Q. Wouldn't the `IPython bash kernel`_ accomplish the same thing?
 
-A. Probably, but it would also store everything as JSON, which requires escaping double quotes and newlines.
-   I wanted to keep this a simple text file that could be used as raw material in larger bash scripts.
+A. Probably, but it would also store everything as JSON,
+   which requires escaping double quotes and newlines.
+   I wanted to keep this a simple text file
+   that could be used as raw material in larger bash scripts.
 
 Q. Wouldn't `xiki`_ do a better job of this?
 
