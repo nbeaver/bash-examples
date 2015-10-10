@@ -14,7 +14,7 @@ Motivation
 
 When showing examples of bash scripts,
 there tend to be two different styles:
-the commandline prompt style, [#prompt_style]_
+the commandline prompt style [#prompt_style]_
 and the inline output style. [#inline_style]_
 
 The commandline/prompt style like this::
@@ -32,22 +32,23 @@ It is intended to resemble comments in a shell script.
 
 They both have advantages and disadvantages;
 the prompt style is usually used for one-liners,
-the inline is tends to be used for longer scripts.
+the inline tends to be used for longer scripts.
 
 However, for saving examples to work from later,
 neither of these options are ideal.
 The prompt style has to be run manually,
-and the inline is has to be done by hand.
+and the inline has to be done by hand.
 
 To get around this,
 I wrote a bunch of bash examples as functions,
-show the code using ``declare -f``
-(this loses comments, unfortunately),
+showing the code via ``declare -f``
 run it with another function and ``"$@"``,
 and finally display the output as commented text.
 
-Comments are shown as well,
-but are indented by a tab.
+This strips comments in the function, unfortunately,
+but comments before and after the example
+are differentiated from the output
+by indenting with a tab (``\t``).
 
 See `<examples-generator.sh>`_ for how this is accomplished.
 
