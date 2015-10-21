@@ -340,7 +340,7 @@ comment "http://perishablepress.com/stop-using-unsafe-characters-in-urls/"
 new_section
 
 comment 'Quoting and `eval`.'
-
+# TODO: split this up into several lines and a global variable instead of a function.
 using_eval() {
     local temp='echo $SHELL'
     declare -p temp
@@ -484,7 +484,8 @@ check_exit_code() {
     printf "From ${FUNCNAME[0]}: Running this:\n$*\n"
     "$@"
     ERROR_CODE=$?
-    if [ $ERROR_CODE -ne 0 ]; then
+    if [ $ERROR_CODE -ne 0 ]
+    then
         echo "From ${FUNCNAME[0]}: The command \`$*' failed with return code $ERROR_CODE."
         return 1
     fi
