@@ -79,6 +79,7 @@ myfunc() {
 }
 declare -f myfunc
 echo_eval 'myfunc 1 2 3'
+echo_eval "myfunc 'first argument' 'second argument' 'third argument'"
 
 # -----------------------------------------------------------------------------
 new_section
