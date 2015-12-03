@@ -12,17 +12,17 @@ See `<bash-examples.sh>`_.
 Motivation
 ----------
 
-When showing examples of bash scripts,
+In examples of shell command usage,
 there tend to be two different styles:
-the commandline prompt style [#prompt_style]_
+the commandline typescript style [#typescript_style]_
 and the inline output style. [#inline_style]_
 
-The commandline/prompt style like this::
+The typescript style looks like this::
 
     $ echo {01..09}
     01 02 03 04 05 06 07 08 09
 
-It is intended to resemble the output from a commandline.
+It is intended to resemble the actual text in a terminal.
 
 The inline output style looks like this::
 
@@ -31,12 +31,12 @@ The inline output style looks like this::
 It is intended to resemble comments in a shell script.
 
 They both have advantages and disadvantages;
-the prompt style is usually used for one-liners,
+the typescript style is usually used for one-liners,
 the inline tends to be used for longer scripts.
 
 However, for saving examples to work from later,
 neither of these options are ideal.
-The prompt style has to be run manually,
+The typescript style is verbose and varies with the environment,
 and the inline has to be done by hand.
 
 To get around this,
@@ -45,10 +45,12 @@ showing the code via ``declare -f``
 run it with another function and ``"$@"``,
 and finally display the output as commented text.
 
-This strips comments in the function, unfortunately,
+This method has the undesirable side-effect
+of stripping comments from the function,
 but comments before and after the example
-are differentiated from the output
-by indenting with a tab (``\t``).
+are passed through
+and differentiated from the output
+by indenting with a tab character (``\t``).
 
 See `<examples-generator.sh>`_ for how this is accomplished.
 
@@ -56,7 +58,7 @@ See `<examples-generator.sh>`_ for how this is accomplished.
 Questions & answers.
 --------------------
 
-:Q: Wouldn't the `IPython bash kernel`_ accomplish the same thing?
+:Q: Wouldn't the `IPython bash kernel`_ accomplish roughly the same thing?
 
 :A: Probably, but it would also store everything as JSON,
     which requires escaping double quotes and newlines.
@@ -70,8 +72,16 @@ Questions & answers.
 .. _xiki: http://xiki.org/
 .. _IPython bash kernel: http://jeroenjanssens.com/2015/02/19/ibash-notebook.html
 
-.. [#prompt_style]
-   Examples of the prompt style:
+.. [#typescript_style]
+
+        The typescript—an intermingling of textual commands and their
+        output—originates with the scrolls of paper on teletypes.
+
+        --- Rob Pike, "Acme: A User Interface for Programmers"
+
+    http://plan9.bell-labs.com/sys/doc/acme.html
+
+   Examples of the typescript style:
 
    Official Bash documentation::
 
