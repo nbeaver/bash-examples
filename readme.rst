@@ -97,7 +97,7 @@ Questions & answers.
 
    http://tldp.org/LDP/Bash-Beginners-Guide/html/sect_03_04.html
 
-   nixCraft:
+   nixCraft::
 
        To view $RANDOM, enter::
 
@@ -106,6 +106,27 @@ Questions & answers.
        Sample outputs::
 
            11799
+
+    CSpace::
+
+        $ cat repro
+        #!/bin/bash
+        function cleanup() {
+           r1=$(/bin/echo one)
+           r2=$(echo two)
+           #echo $r1 '!' $r2 >>/tmp/logfile
+           echo $r1 '!' $r2 1>&2
+        }
+        trap cleanup EXIT
+        sleep 1
+        echo final
+
+        $ ./repro | false
+        final
+        one final ! final two
+        $
+
+    https://utcc.utoronto.ca/~cks/space/blog/unix/BashBufferingForkBug
 
 .. [#inline_style]
    Examples of the inline style:
