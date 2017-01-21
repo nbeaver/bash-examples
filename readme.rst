@@ -144,3 +144,11 @@ Questions & answers.
        {g..a}         => g f e d c b a
 
    http://www.linuxjournal.com/content/bash-brace-expansion
+
+-------
+License
+-------
+
+This project is licensed under the terms of the `MIT license`_.
+
+.. _MIT license: LICENSE.txt
