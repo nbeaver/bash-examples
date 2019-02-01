@@ -910,3 +910,13 @@ echo_eval 'echo {3..-2}'
 echo_eval 'echo {3..-2}'
 echo_eval 'echo {a..g}'
 echo_eval 'echo {g..a}'
+
+# -----------------------------------------------------------------------------
+new_section
+comment "Example debug option"
+comment 'https://unix.stackexchange.com/questions/122845/using-a-b-for-variable-assignment-in-scripts'
+DEBUG="${DEBUG:-0}"
+if test "$DEBUG" -gt 0
+then
+    printf 'We are in debug mode.\n'
+fi
