@@ -1,0 +1,1 @@
+- [ ] Try using the bash kernel of a Jupyter / IPython notebook.
